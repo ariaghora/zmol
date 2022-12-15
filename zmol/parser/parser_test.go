@@ -47,3 +47,71 @@ func TestVarAssign(t *testing.T) {
 	}
 
 }
+
+func TestIdentifier(t *testing.T) {
+	source := "test"
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.Identifier, got %T", program.Statements[0])
+	}
+
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.Identifier, got %T", stmt.Expression)
+	}
+
+	if ident.Value != "test" {
+		t.Errorf("Expected identifier to be 'test', got %s", ident.Value)
+	}
+}
+
+func TestIntegerLiteral(t *testing.T) {
+	source := "5"
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.IntegerLiteral, got %T", stmt.Expression)
+	}
+
+	if literal.Value != 5 {
+		t.Errorf("Expected literal to be 5, got %d", literal.Value)
+	}
+}

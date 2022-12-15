@@ -25,11 +25,12 @@ const (
 	TokNewLine         = "LINEBREAK"
 	TokEOF             = "EOF"
 	TokIdent           = "IDENT"
-	TokNumber          = "NUMBER"
 	TokIf              = "if"
 	TokElse            = "else"
 	TokTrue            = "true"
 	TokFalse           = "false"
+	TokInt             = "INT"
+	TokFloat           = "FLOAT"
 )
 
 type ZTok struct {
@@ -92,7 +93,11 @@ func (z *ZLex) addNumber() {
 		}
 		nChar++
 	}
-	z.addTok(TokNumber, nChar)
+	if hasDot {
+		z.addTok(TokFloat, nChar)
+	} else {
+		z.addTok(TokInt, nChar)
+	}
 }
 
 func (z *ZLex) addTok(tokType TokType, nChar int) {
