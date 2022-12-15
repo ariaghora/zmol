@@ -93,13 +93,27 @@ Special operators, operating on iterables, lowest precedence:
 let result = numbers
     |> scale(3)
     |> minus(1)
-    >- is_even()
-    -> sum()
-    -> print()
+    >- is_even
+    -> sum
+    -> print
 ```
+
+Parentheses are optional if the function definition has no parameter.
 
 ### Project Euler problem 1
 ```
 @is_divisible(x) = (x % 3 == 0) && (x % 5 == 0)
-[1 ... 1000] >- is_divisible() -> sum() -> print()
+[1 ... 1000] >- is_divisible -> sum -> print
+```
+
+### Guessing game
+```
+@answer = 42
+while (@in = input() -> int) != answer:
+    @message = if in > answer: "too high"
+    | in < answer: "too low"
+    | "that's the correct answer!"
+    end
+    print(message)
+end
 ```
