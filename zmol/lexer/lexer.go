@@ -8,20 +8,28 @@ import (
 type TokType string
 
 const (
-	TokPlus   TokType = "+"
-	TokMinus          = "-"
-	TokGT             = ">"
-	TokGTE            = ">="
-	TokLT             = "<"
-	TokLTE            = "<="
-	TokDot            = "."
-	TokComma          = ","
-	TokLBrac          = "["
-	TokRBrac          = "]"
-	TokAssign         = "="
-	TokEOF            = "EOF"
-	TokIdent          = "IDENT"
-	TokNumber         = "NUMBER"
+	TokPlus    TokType = "+"
+	TokMinus           = "-"
+	TokGT              = ">"
+	TokGTE             = ">="
+	TokLT              = "<"
+	TokLTE             = "<="
+	TokDot             = "."
+	TokComma           = ","
+	TokLBrac           = "["
+	TokRBrac           = "]"
+	TokAssign          = "="
+	TokAt              = "@"
+	TokLParen          = "("
+	TokRParen          = ")"
+	TokNewLine         = "LINEBREAK"
+	TokEOF             = "EOF"
+	TokIdent           = "IDENT"
+	TokNumber          = "NUMBER"
+	TokIf              = "if"
+	TokElse            = "else"
+	TokTrue            = "true"
+	TokFalse           = "false"
 )
 
 type ZTok struct {
@@ -31,28 +39,44 @@ type ZTok struct {
 
 type ZLex struct {
 	i      int
-	tokens []ZTok
+	Tokens []ZTok
 	code   string
 }
 
 var SingularTokOps = map[rune]TokType{
-	'+': TokPlus,
-	'-': TokMinus,
-	'>': TokGT,
-	'<': TokLT,
-	'.': TokDot,
-	',': TokComma,
-	'[': TokLBrac,
-	']': TokRBrac,
-	'=': TokAssign,
+	'@':  TokAt,
+	'+':  TokPlus,
+	'-':  TokMinus,
+	'>':  TokGT,
+	'<':  TokLT,
+	'.':  TokDot,
+	',':  TokComma,
+	'[':  TokLBrac,
+	']':  TokRBrac,
+	'=':  TokAssign,
+	'(':  TokLParen,
+	')':  TokRParen,
+	'\n': TokNewLine,
+}
+
+var KeywordTok = map[string]TokType{
+	"if":    TokIf,
+	"else":  TokElse,
+	"true":  TokTrue,
+	"false": TokFalse,
 }
 
 func (z *ZLex) addIdent() {
 	var nChar int
+	start := z.i
 	for z.i+nChar < len(z.code) && (unicode.IsLetter(rune(z.code[z.i+nChar])) || unicode.IsDigit(rune(z.code[z.i+nChar]))) {
 		nChar++
 	}
-	z.addTok(TokIdent, nChar)
+	if tokType, ok := KeywordTok[z.code[start:z.i+nChar]]; ok {
+		z.addTok(tokType, nChar)
+	} else {
+		z.addTok(TokIdent, nChar)
+	}
 }
 
 func (z *ZLex) addNumber() {
@@ -72,7 +96,7 @@ func (z *ZLex) addNumber() {
 }
 
 func (z *ZLex) addTok(tokType TokType, nChar int) {
-	z.tokens = append(z.tokens, ZTok{
+	z.Tokens = append(z.Tokens, ZTok{
 		Type: tokType,
 		Text: z.code[z.i : z.i+nChar],
 	})
@@ -87,7 +111,7 @@ func (z *ZLex) skipWhitespace() {
 
 func (z *ZLex) Lex() error {
 	for z.i < len(z.code) {
-		if unicode.IsSpace(rune(z.code[z.i])) {
+		if unicode.IsSpace(rune(z.code[z.i])) && z.code[z.i] != '\n' {
 			z.skipWhitespace()
 		} else if tokType, ok := SingularTokOps[rune(z.code[z.i])]; ok {
 			if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
@@ -105,9 +129,18 @@ func (z *ZLex) Lex() error {
 			return errors.New("Invalid token: " + string(z.code[z.i]))
 		}
 	}
-	z.tokens = append(z.tokens, ZTok{Type: TokEOF})
+	z.Tokens = append(z.Tokens, ZTok{Type: TokEOF})
 	return nil
 }
+
+// func (z *ZLex) NextToken() ZTok {
+// 	if len(z.tokens) == 0 {
+// 		z.Lex()
+// 	}
+// 	tok := z.tokens[0]
+// 	z.tokens = z.tokens[1:]
+// 	return tok
+// }
 
 func NewLexer(code string) *ZLex {
 	return &ZLex{code: code}

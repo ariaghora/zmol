@@ -1,6 +1,6 @@
 package ast
 
-import "zmol/lexer"
+import "github.com/ariaghora/zmol/zmol/lexer"
 
 type Node interface {
 	Literal() string
@@ -27,11 +27,14 @@ func (p *Program) Literal() string {
 	return ""
 }
 
-type LetStatement struct {
+type VarrAssignmentStatement struct {
 	Token lexer.ZTok
 	Name  *Identifier
 	Value Expression
 }
+
+func (ls *VarrAssignmentStatement) statementNode()  {}
+func (ls *VarrAssignmentStatement) Literal() string { return ls.Token.Text }
 
 type Identifier struct {
 	Token lexer.ZTok
