@@ -3,7 +3,7 @@ package lexer
 import "testing"
 
 func TestAssignmentStatement(t *testing.T) {
-	input := `@x = 5
+	input := `@x = 5.0
 @y = 10
 @foobar = 838383 `
 
@@ -18,17 +18,17 @@ func TestAssignmentStatement(t *testing.T) {
 		{Type: TokAt, Text: "@"},
 		{Type: TokIdent, Text: "x"},
 		{Type: TokAssign, Text: "="},
-		{Type: TokNumber, Text: "5"},
+		{Type: TokFloat, Text: "5.0"},
 		{Type: TokNewLine, Text: "\n"},
 		{Type: TokAt, Text: "@"},
 		{Type: TokIdent, Text: "y"},
 		{Type: TokAssign, Text: "="},
-		{Type: TokNumber, Text: "10"},
+		{Type: TokInt, Text: "10"},
 		{Type: TokNewLine, Text: "\n"},
 		{Type: TokAt, Text: "@"},
 		{Type: TokIdent, Text: "foobar"},
 		{Type: TokAssign, Text: "="},
-		{Type: TokNumber, Text: "838383"},
+		{Type: TokInt, Text: "838383"},
 		{Type: TokEOF, Text: ""},
 	}
 

@@ -124,11 +124,11 @@ func TestSimpleScript(t *testing.T) {
 	expectedTokens := []ZTok{
 		{Type: TokIdent, Text: "number1"},
 		{Type: TokAssign, Text: "="},
-		{Type: TokNumber, Text: "5"},
+		{Type: TokInt, Text: "5"},
 		{Type: TokNewLine, Text: "\n"},
 		{Type: TokIdent, Text: "number2"},
 		{Type: TokAssign, Text: "="},
-		{Type: TokNumber, Text: "10.0"},
+		{Type: TokFloat, Text: "10.0"},
 		{Type: TokNewLine, Text: "\n"},
 		{Type: TokIdent, Text: "number3"},
 		{Type: TokAssign, Text: "="},
