@@ -32,8 +32,8 @@ func TestLexSimpleOpsSequence(t *testing.T) {
 	expectedTokens := []ZTok{
 		{Type: TokPlus, Text: "+"},
 		{Type: TokMinus, Text: "-"},
-		{Type: TokGT, Text: ">"},
-		{Type: TokLT, Text: "<"},
+		{Type: TokGt, Text: ">"},
+		{Type: TokLt, Text: "<"},
 		{Type: TokDot, Text: "."},
 		{Type: TokEOF, Text: ""},
 	}
@@ -59,8 +59,8 @@ func TestLexOpsSeqLeadingSpace(t *testing.T) {
 	expectedTokens := []ZTok{
 		{Type: TokPlus, Text: "+"},
 		{Type: TokMinus, Text: "-"},
-		{Type: TokGT, Text: ">"},
-		{Type: TokLT, Text: "<"},
+		{Type: TokGt, Text: ">"},
+		{Type: TokLt, Text: "<"},
 		{Type: TokDot, Text: "."},
 		{Type: TokEOF, Text: ""},
 	}

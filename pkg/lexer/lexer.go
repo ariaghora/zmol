@@ -10,9 +10,12 @@ type TokType string
 const (
 	TokPlus    TokType = "+"
 	TokMinus           = "-"
-	TokGT              = ">"
+	TokSlash           = "/"
+	TokAster           = "*"
+	TokEq              = "=="
+	TokGt              = ">"
 	TokGTE             = ">="
-	TokLT              = "<"
+	TokLt              = "<"
 	TokLTE             = "<="
 	TokDot             = "."
 	TokComma           = ","
@@ -48,8 +51,10 @@ var SingularTokOps = map[rune]TokType{
 	'@':  TokAt,
 	'+':  TokPlus,
 	'-':  TokMinus,
-	'>':  TokGT,
-	'<':  TokLT,
+	'*':  TokAster,
+	'/':  TokSlash,
+	'>':  TokGt,
+	'<':  TokLt,
 	'.':  TokDot,
 	',':  TokComma,
 	'[':  TokLBrac,

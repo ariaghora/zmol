@@ -3,10 +3,11 @@ package parser
 import (
 	"strconv"
 
-	"github.com/ariaghora/zmol/zmol/ast"
-	"github.com/ariaghora/zmol/zmol/lexer"
+	"github.com/ariaghora/zmol/pkg/ast"
+	"github.com/ariaghora/zmol/pkg/lexer"
 )
 
+// Following constants are used to determine the precedence of the operators
 const (
 	_ int = iota
 	PrecLowest
@@ -17,6 +18,16 @@ const (
 	PrecPrefix // -X or !X
 	PrecCall   // myFunction(X)
 )
+
+var precedences = map[lexer.TokType]int{
+	lexer.TokEq:    PrecEquals,
+	lexer.TokPlus:  PrecAddSub,
+	lexer.TokMinus: PrecAddSub,
+	lexer.TokSlash: PrecProd,
+	lexer.TokAster: PrecProd,
+	lexer.TokLt:    PrecGtLt,
+	lexer.TokGt:    PrecGtLt,
+}
 
 type (
 	prefixParseFn func() ast.Expression
@@ -46,6 +57,14 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.prefixParseFns = make(map[lexer.TokType]prefixParseFn)
 	p.registerPrefix(lexer.TokIdent, p.parseIdentifier)
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
+	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
+	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
+
+	p.infixParseFns = make(map[lexer.TokType]infixParseFn)
+	p.registerInfix(lexer.TokPlus, p.parseInfixExpression)
+	p.registerInfix(lexer.TokMinus, p.parseInfixExpression)
+	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
+	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
 
 	return p
 }
@@ -94,11 +113,19 @@ func (p *Parser) parseVarAssignStatement() *ast.VarrAssignmentStatement {
 		return nil
 	}
 
-	// TODO: We're skipping the expressions until we
-	// encounter a line break or EOF
-	for !(p.curTok.Type == lexer.TokNewLine || p.curTok.Type == lexer.TokEOF) {
+	p.nextToken()
+
+	statement.Value = p.parseExpression(PrecLowest)
+
+	if p.peekTok.Type == lexer.TokNewLine {
 		p.nextToken()
 	}
+
+	// TODO: We're skipping the expressions until we
+	// encounter a line break or EOF
+	// for !(p.curTok.Type == lexer.TokNewLine || p.curTok.Type == lexer.TokEOF) {
+	// 	p.nextToken()
+	// }
 
 	return statement
 }
@@ -122,6 +149,17 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 	}
 	leftExp := prefix()
 
+	for !(p.peekTok.Type == lexer.TokNewLine || p.peekTok.Type == lexer.TokEOF) && prec < p.peekPrec() {
+		infix := p.infixParseFns[p.peekTok.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+	}
+
 	return leftExp
 }
 
@@ -141,6 +179,33 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parserPrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.curTok,
+		Operator: p.curTok.Text,
+	}
+
+	p.nextToken()
+
+	expression.Right = p.parseExpression(PrecPrefix)
+
+	return expression
+}
+
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:    p.curTok,
+		Operator: p.curTok.Text,
+		Left:     left,
+	}
+
+	prec := p.curPrec()
+	p.nextToken()
+	expression.Right = p.parseExpression(prec)
+
+	return expression
 }
 
 func (p *Parser) peekError(t lexer.TokType) {
@@ -164,6 +229,22 @@ func (p *Parser) registerPrefix(tokType lexer.TokType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tokType lexer.TokType, fn infixParseFn) {
 	p.infixParseFns[tokType] = fn
+}
+
+func (p *Parser) curPrec() int {
+	if p, ok := precedences[p.curTok.Type]; ok {
+		return p
+	}
+
+	return PrecLowest
+}
+
+func (p *Parser) peekPrec() int {
+	if p, ok := precedences[p.peekTok.Type]; ok {
+		return p
+	}
+
+	return PrecLowest
 }
 
 func (p *Parser) Errors() []string {

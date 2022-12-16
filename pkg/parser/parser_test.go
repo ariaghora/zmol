@@ -1,10 +1,11 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/ariaghora/zmol/zmol/ast"
-	"github.com/ariaghora/zmol/zmol/lexer"
+	"github.com/ariaghora/zmol/pkg/ast"
+	"github.com/ariaghora/zmol/pkg/lexer"
 )
 
 func TestVarAssign(t *testing.T) {
@@ -113,5 +114,68 @@ func TestIntegerLiteral(t *testing.T) {
 
 	if literal.Value != 5 {
 		t.Errorf("Expected literal to be 5, got %d", literal.Value)
+	}
+}
+
+func TestParseInfix(t *testing.T) {
+	tests := []struct {
+		input    string
+		left     int64
+		operator string
+		right    int64
+	}{
+		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5", 5, "*", 5},
+		{"5 / 5", 5, "/", 5},
+	}
+
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		err := l.Lex()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		p := NewParser(l)
+		program := p.ParseProgram()
+
+		if program == nil {
+			t.Errorf("ParseProgram() returned nil")
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+		}
+
+		infix, ok := stmt.Expression.(*ast.InfixExpression)
+		if !ok {
+			t.Errorf("Expected expression to be *ast.InfixExpression, got %T", stmt.Expression)
+		}
+
+		if infix.Operator != tt.operator {
+			t.Errorf("Expected operator to be %s, got %s", tt.operator, infix.Operator)
+		}
+
+		left, ok := infix.Left.(*ast.IntegerLiteral)
+		if !ok {
+			t.Errorf("Expected left to be *ast.IntegerLiteral, got %T", infix.Left)
+		}
+
+		if left.Value != tt.left {
+			t.Errorf("Expected left to be %d, got %d", tt.left, left.Value)
+		}
+
+		right, ok := infix.Right.(*ast.IntegerLiteral)
+		if !ok {
+			t.Errorf("Expected right to be *ast.IntegerLiteral, got %T", infix.Right)
+		}
+
+		if right.Value != tt.right {
+			t.Errorf("Expected right to be %d, got %d", tt.right, right.Value)
+		}
+
+		fmt.Println(infix.Str())
 	}
 }

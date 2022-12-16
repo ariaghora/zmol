@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/ariaghora/zmol/zmol/lexer"
+import "github.com/ariaghora/zmol/pkg/lexer"
 
 type Node interface {
 	Literal() string
@@ -45,7 +45,13 @@ type VarrAssignmentStatement struct {
 func (ls *VarrAssignmentStatement) statementNode()  {}
 func (ls *VarrAssignmentStatement) Literal() string { return ls.Token.Text }
 func (ls *VarrAssignmentStatement) Str() string {
-	return ls.Token.Text + " " + ls.Name.Str() + " = " + ls.Value.Str() + " "
+	s := ls.Token.Text +
+		ls.Name.Str() +
+		" = "
+	if ls.Value != nil {
+		s += ls.Value.Str()
+	}
+	return s
 }
 
 type Identifier struct {
@@ -74,3 +80,28 @@ type IntegerLiteral struct {
 func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) Literal() string { return il.Token.Text }
 func (il *IntegerLiteral) Str() string     { return il.Token.Text }
+
+type InfixExpression struct {
+	Token    lexer.ZTok // the operator token, e.g. +
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+func (ie *InfixExpression) Literal() string { return ie.Token.Text }
+func (ie *InfixExpression) Str() string {
+	return "(" + ie.Left.Str() + " " + ie.Operator + " " + ie.Right.Str() + ")"
+}
+
+type PrefixExpression struct {
+	Token    lexer.ZTok // the operator token, e.g. -
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode() {}
+func (pe *PrefixExpression) Literal() string { return pe.Token.Text }
+func (pe *PrefixExpression) Str() string {
+	return "(" + pe.Operator + pe.Right.Str() + ")"
+}
