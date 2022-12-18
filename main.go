@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ariaghora/zmol/pkg/eval"
 	"github.com/ariaghora/zmol/pkg/lexer"
 	"github.com/ariaghora/zmol/pkg/parser"
 )
@@ -28,8 +29,9 @@ func (z *Zmol) Run(code string) *ZValue {
 
 	parser := parser.NewParser(lexer)
 	program := parser.ParseProgram()
+	result := eval.Eval(program)
 
-	fmt.Println(program.Str())
+	fmt.Println(result.Str())
 
 	if err != nil {
 		fmt.Println(err)

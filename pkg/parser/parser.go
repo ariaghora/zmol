@@ -59,6 +59,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.prefixParseFns = make(map[lexer.TokType]prefixParseFn)
 	p.registerPrefix(lexer.TokIdent, p.parseIdentifier)
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
+	p.registerPrefix(lexer.TokFloat, p.parseFloatLiteral)
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
@@ -179,6 +180,20 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+func (p *Parser) parseFloatLiteral() ast.Expression {
+	lit := &ast.FloatLiteral{Token: p.curTok}
+
+	value, err := strconv.ParseFloat(p.curTok.Text, 64)
+	if err != nil {
+		msg := "Could not parse %q as float"
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	lit.Value = value
+	return lit
+}
+
 func (p *Parser) parserPrefixExpression() ast.Expression {
 	expression := &ast.PrefixExpression{
 		Token:    p.curTok,
@@ -219,7 +234,16 @@ func (p *Parser) parseFuncLiteral() ast.Expression {
 		return nil
 	}
 
-	lit.Body = p.parseBlockStatement()
+	// if p.expectPeek(lexer.TokNewLine) {
+	if p.peekTok.Type == lexer.TokNewLine {
+		p.skipLinebreak()
+		lit.Multiline = true
+		lit.Body = p.parseBlockStatement()
+	} else {
+		p.nextToken()
+		lit.Multiline = false
+		lit.BodySingle = p.parseExpressionStatement()
+	}
 
 	return lit
 }
@@ -257,7 +281,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 
 	p.nextToken()
 
-	for !(p.curTok.Type == lexer.TokRBrac || p.curTok.Type == lexer.TokEOF) {
+	for !(p.curTok.Type == lexer.TokEnd || p.curTok.Type == lexer.TokEOF) {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			block.Statements = append(block.Statements, stmt)
@@ -305,6 +329,12 @@ func (p *Parser) peekPrec() int {
 	}
 
 	return PrecLowest
+}
+
+func (p *Parser) skipLinebreak() {
+	for p.peekTok.Type == lexer.TokNewLine {
+		p.nextToken()
+	}
 }
 
 func (p *Parser) Errors() []string {

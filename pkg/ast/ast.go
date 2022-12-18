@@ -81,6 +81,15 @@ func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) Literal() string { return il.Token.Text }
 func (il *IntegerLiteral) Str() string     { return il.Token.Text }
 
+type FloatLiteral struct {
+	Token lexer.ZTok
+	Value float64
+}
+
+func (fl *FloatLiteral) expressionNode() {}
+func (ie *FloatLiteral) Literal() string { return ie.Token.Text }
+func (ie *FloatLiteral) Str() string     { return ie.Token.Text }
+
 type InfixExpression struct {
 	Token    lexer.ZTok // the operator token, e.g. +
 	Left     Expression
@@ -125,6 +134,8 @@ type FuncLiteral struct {
 	Token      lexer.ZTok // the 'fn' token
 	Parameters []*Identifier
 	Body       *BlockStatement
+	BodySingle *ExpressionStatement
+	Multiline  bool
 }
 
 func (fl *FuncLiteral) expressionNode() {}

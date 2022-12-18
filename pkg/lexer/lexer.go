@@ -36,6 +36,7 @@ const (
 	TokFalse           = "false"
 	TokInt             = "INT"
 	TokFloat           = "FLOAT"
+	TokEnd             = "END"
 )
 
 type ZTok struct {
@@ -74,6 +75,7 @@ var KeywordTok = map[string]TokType{
 	"else":  TokElse,
 	"true":  TokTrue,
 	"false": TokFalse,
+	"end":   TokEnd,
 }
 
 func (z *ZLex) addIdent() {
