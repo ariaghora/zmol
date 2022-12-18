@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ariaghora/zmol/pkg/ast"
@@ -9,9 +8,9 @@ import (
 )
 
 func TestVarAssign(t *testing.T) {
-	source := ` @a = 1
-	@b = 2
-	@c = 3 `
+	source := `let a = 1
+	let b = 2
+	let c = 3 `
 
 	lexer := lexer.NewLexer(source)
 	err := lexer.Lex()
@@ -176,6 +175,84 @@ func TestParseInfix(t *testing.T) {
 			t.Errorf("Expected right to be %d, got %d", tt.right, right.Value)
 		}
 
-		fmt.Println(infix.Str())
 	}
+}
+
+func TestParseFuncLiteral(t *testing.T) {
+	source := "@(x, y): x + y"
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	function, ok := stmt.Expression.(*ast.FuncLiteral)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.FuncLiteral, got %T", stmt.Expression)
+	}
+
+	if len(function.Parameters) != 2 {
+		t.Errorf("Expected 2 parameters, got %d", len(function.Parameters))
+	}
+
+	if function.Parameters[0].Str() != "x" {
+		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0])
+	}
+
+	if function.Parameters[1].Str() != "y" {
+		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
+	}
+
+	if len(function.Body.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(function.Body.Statements))
+	}
+
+	body, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", function.Body.Statements[0])
+	}
+
+	infix, ok := body.Expression.(*ast.InfixExpression)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.InfixExpression, got %T", body.Expression)
+	}
+
+	if infix.Operator != "+" {
+		t.Errorf("Expected operator to be '+', got %s", infix.Operator)
+	}
+
+	left, ok := infix.Left.(*ast.Identifier)
+	if !ok {
+		t.Errorf("Expected left to be *ast.Identifier, got %T", infix.Left)
+	}
+
+	if left.Value != "x" {
+		t.Errorf("Expected left to be 'x', got %s", left.Value)
+	}
+
+	right, ok := infix.Right.(*ast.Identifier)
+	if !ok {
+		t.Errorf("Expected right to be *ast.Identifier, got %T", infix.Right)
+	}
+
+	if right.Value != "y" {
+		t.Errorf("Expected right to be 'y', got %s", right.Value)
+	}
+
 }

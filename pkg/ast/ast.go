@@ -105,3 +105,34 @@ func (pe *PrefixExpression) Literal() string { return pe.Token.Text }
 func (pe *PrefixExpression) Str() string {
 	return "(" + pe.Operator + pe.Right.Str() + ")"
 }
+
+type BlockStatement struct {
+	Token      lexer.ZTok // the '{' token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode()  {}
+func (bs *BlockStatement) Literal() string { return bs.Token.Text }
+func (bs *BlockStatement) Str() string {
+	out := ""
+	for _, s := range bs.Statements {
+		out += s.Str()
+	}
+	return out
+}
+
+type FuncLiteral struct {
+	Token      lexer.ZTok // the 'fn' token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (fl *FuncLiteral) expressionNode() {}
+func (fl *FuncLiteral) Literal() string { return fl.Token.Text }
+func (fl *FuncLiteral) Str() string {
+	params := ""
+	for _, p := range fl.Parameters {
+		params += p.Str() + ", "
+	}
+	return fl.Token.Text + "(" + params + ")" + fl.Body.Str()
+}

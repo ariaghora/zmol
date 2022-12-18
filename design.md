@@ -3,31 +3,31 @@
 -- This is a comment
 
 -- Variable definition
-@x = 10
+let x = 10
 print(x)
 
 -- Just refer to the identifier to access a variable
-@double = x * 2
+let double = x * 2
 print(double)
 
 -- List
-@a_list = [1, 2, 3]
+let a_list = [1, 2, 3]
 
 -- Creating a list with range
-@numbers = [1 ... high]
-@numbers = [1 ... high, 2]
+let numbers = [1 ... high]
+let numbers = [1 ... high, 2]
 
 ```
 
 ## Conditional
 - Basic form: `<BOOL_EXP> ? <EXPR_WHEN_TRUE> | <EXPR_WHEN_FALSE>`
 ```
-@number = 5
-@result = if (number % 3 == 0) && (number % 5 == 0): "fizz" | "buzz" 
+number = 5
+result = if (number % 3 == 0) && (number % 5 == 0): "fizz" | "buzz" 
 
 -- or in multi-line form
 
-@result = if (number % 3 == 0) && (number % 5 == 0):
+result = if (number % 3 == 0) && (number % 5 == 0):
     "fizz"
 | 
     "buzz" 
@@ -35,7 +35,7 @@ end
 
 -- or like this, when the blocks have one statement
 
-@n_wheels = input() -> int()
+n_wheels = input() -> int()
 
 if n_wheels == 4: print("maybe a car")
 | n_wheels == 2: print("maybe a motorcycle")
@@ -71,16 +71,15 @@ end
 ```
 -- Define a function like this. No return statement.
 -- Any last expression in the block is the returned value.
-@scale(x, factor) = x * factor 
-@minus(x, amount) = x - amount 
-
--- Multi-line definition
-@is_even(x) =
+let is_even = @(x):
     x % 2 == 0
 end
 
+-- One-line function
+let add = @(x, y): x + y
+
 -- Recursion
-@fib(n) = n > 1 ? n + fib(n-1) | 1
+let fib = @(n): n > 1 ? n + fib(n-1) | 1
 ```
 
 ## Special operators
@@ -102,15 +101,15 @@ Parentheses are optional if the function definition has no parameter.
 
 ### Project Euler problem 1
 ```
-@is_divisible(x) = (x % 3 == 0) && (x % 5 == 0)
+let is_divisible = @(x): (x % 3 == 0) && (x % 5 == 0)
 [1 ... 1000] >- is_divisible -> sum -> print
 ```
 
 ### Guessing game
 ```
-@answer = 42
-while (@in = input() -> int) != answer:
-    @message = if in > answer: "too high"
+let answer = 42
+while (let in = input() -> int) != answer:
+    let message = if in > answer: "too high"
     | in < answer: "too low"
     | "that's the correct answer!"
     end

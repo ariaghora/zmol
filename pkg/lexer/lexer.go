@@ -25,6 +25,8 @@ const (
 	TokAt              = "@"
 	TokLParen          = "("
 	TokRParen          = ")"
+	TokColon           = ":"
+	TokLet             = "let"
 	TokNewLine         = "LINEBREAK"
 	TokEOF             = "EOF"
 	TokIdent           = "IDENT"
@@ -63,9 +65,11 @@ var SingularTokOps = map[rune]TokType{
 	'(':  TokLParen,
 	')':  TokRParen,
 	'\n': TokNewLine,
+	':':  TokColon,
 }
 
 var KeywordTok = map[string]TokType{
+	"let":   TokLet,
 	"if":    TokIf,
 	"else":  TokElse,
 	"true":  TokTrue,

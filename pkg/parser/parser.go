@@ -11,6 +11,7 @@ import (
 const (
 	_ int = iota
 	PrecLowest
+	PrecAssign // =
 	PrecEquals // ==
 	PrecGtLt   // > or <
 	PrecAddSub // +
@@ -20,13 +21,14 @@ const (
 )
 
 var precedences = map[lexer.TokType]int{
-	lexer.TokEq:    PrecEquals,
-	lexer.TokPlus:  PrecAddSub,
-	lexer.TokMinus: PrecAddSub,
-	lexer.TokSlash: PrecProd,
-	lexer.TokAster: PrecProd,
-	lexer.TokLt:    PrecGtLt,
-	lexer.TokGt:    PrecGtLt,
+	lexer.TokAssign: PrecAssign,
+	lexer.TokEq:     PrecEquals,
+	lexer.TokPlus:   PrecAddSub,
+	lexer.TokMinus:  PrecAddSub,
+	lexer.TokSlash:  PrecProd,
+	lexer.TokAster:  PrecProd,
+	lexer.TokLt:     PrecGtLt,
+	lexer.TokGt:     PrecGtLt,
 }
 
 type (
@@ -59,12 +61,14 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
+	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
 
 	p.infixParseFns = make(map[lexer.TokType]infixParseFn)
 	p.registerInfix(lexer.TokPlus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokMinus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
+	// p.registerInfix(lexer.TokEq, p.parseInfixExpression)
 
 	return p
 }
@@ -93,14 +97,14 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curTok.Type {
-	case lexer.TokAt:
-		return p.parseVarAssignStatement()
+	case lexer.TokLet:
+		return p.parseVarAssign()
 	default:
 		return p.parseExpressionStatement()
 	}
 }
 
-func (p *Parser) parseVarAssignStatement() *ast.VarrAssignmentStatement {
+func (p *Parser) parseVarAssign() *ast.VarrAssignmentStatement {
 	statement := &ast.VarrAssignmentStatement{Token: p.curTok}
 
 	if !p.expectPeek(lexer.TokIdent) {
@@ -120,12 +124,6 @@ func (p *Parser) parseVarAssignStatement() *ast.VarrAssignmentStatement {
 	if p.peekTok.Type == lexer.TokNewLine {
 		p.nextToken()
 	}
-
-	// TODO: We're skipping the expressions until we
-	// encounter a line break or EOF
-	// for !(p.curTok.Type == lexer.TokNewLine || p.curTok.Type == lexer.TokEOF) {
-	// 	p.nextToken()
-	// }
 
 	return statement
 }
@@ -206,6 +204,68 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression.Right = p.parseExpression(prec)
 
 	return expression
+}
+
+func (p *Parser) parseFuncLiteral() ast.Expression {
+	lit := &ast.FuncLiteral{Token: p.curTok}
+
+	if !p.expectPeek(lexer.TokLParen) {
+		return nil
+	}
+
+	lit.Parameters = p.parseFuncParameters()
+
+	if !p.expectPeek(lexer.TokColon) {
+		return nil
+	}
+
+	lit.Body = p.parseBlockStatement()
+
+	return lit
+}
+
+func (p *Parser) parseFuncParameters() []*ast.Identifier {
+	identifiers := []*ast.Identifier{}
+
+	if p.peekTok.Type == lexer.TokRParen {
+		p.nextToken()
+		return identifiers
+	}
+
+	p.nextToken()
+
+	ident := &ast.Identifier{Token: p.curTok, Value: p.curTok.Text}
+	identifiers = append(identifiers, ident)
+
+	for p.peekTok.Type == lexer.TokComma {
+		p.nextToken()
+		p.nextToken()
+		ident := &ast.Identifier{Token: p.curTok, Value: p.curTok.Text}
+		identifiers = append(identifiers, ident)
+	}
+
+	if !p.expectPeek(lexer.TokRParen) {
+		return nil
+	}
+
+	return identifiers
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curTok}
+	block.Statements = []ast.Statement{}
+
+	p.nextToken()
+
+	for !(p.curTok.Type == lexer.TokRBrac || p.curTok.Type == lexer.TokEOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+
+	return block
 }
 
 func (p *Parser) peekError(t lexer.TokType) {
