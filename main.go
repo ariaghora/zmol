@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/ariaghora/zmol/pkg/eval"
-	"github.com/ariaghora/zmol/pkg/lexer"
-	"github.com/ariaghora/zmol/pkg/parser"
 	"github.com/fatih/color"
 )
 
@@ -27,19 +25,10 @@ func (z *Zmol) Run(code string) *ZValue {
 		}
 	}()
 
-	lexer := lexer.NewLexer(code)
-	err := lexer.Lex()
-
-	parser := parser.NewParser(lexer)
-	program := parser.ParseProgram()
-	result := eval.Eval(program)
+	state := eval.NewZmolState()
+	result := state.Eval(code)
 
 	fmt.Println(result.Str())
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 
 	return nil
 }

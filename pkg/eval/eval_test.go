@@ -3,8 +3,6 @@ package eval
 import (
 	"testing"
 
-	"github.com/ariaghora/zmol/pkg/lexer"
-	"github.com/ariaghora/zmol/pkg/parser"
 	"github.com/ariaghora/zmol/pkg/val"
 )
 
@@ -25,11 +23,8 @@ func TestEvalIntegerExpression(t *testing.T) {
 }
 
 func testEval(input string) val.ZValue {
-	l := lexer.NewLexer(input)
-	l.Lex()
-	p := parser.NewParser(l)
-	program := p.ParseProgram()
-	return Eval(program)
+	state := NewZmolState()
+	return state.Eval(input)
 }
 
 func testIntegerObject(t *testing.T, obj val.ZValue, expected int64) bool {
