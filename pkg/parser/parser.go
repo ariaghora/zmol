@@ -29,6 +29,7 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokAster:  PrecProd,
 	lexer.TokLt:     PrecGtLt,
 	lexer.TokGt:     PrecGtLt,
+	lexer.TokLParen: PrecCall,
 }
 
 type (
@@ -69,7 +70,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokMinus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
-	// p.registerInfix(lexer.TokEq, p.parseInfixExpression)
+	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 
 	return p
 }
@@ -87,6 +88,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 
 	for p.curTok.Type != lexer.TokEOF {
+		if p.curTok.Type == lexer.TokNewLine {
+			p.nextToken()
+			continue
+		}
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -282,6 +287,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	p.nextToken()
 
 	for !(p.curTok.Type == lexer.TokEnd || p.curTok.Type == lexer.TokEOF) {
+		p.skipLinebreak()
 		stmt := p.parseStatement()
 		if stmt != nil {
 			block.Statements = append(block.Statements, stmt)
@@ -290,6 +296,40 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	}
 
 	return block
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{
+		Token:    p.curTok,
+		Function: function,
+	}
+
+	exp.Arguments = p.parseCallArguments()
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTok.Type == lexer.TokRParen {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(PrecLowest))
+
+	for p.peekTok.Type == lexer.TokComma {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(PrecLowest))
+	}
+
+	if !p.expectPeek(lexer.TokRParen) {
+		return nil
+	}
+
+	return args
 }
 
 func (p *Parser) peekError(t lexer.TokType) {

@@ -7,6 +7,40 @@ import (
 	"github.com/ariaghora/zmol/pkg/lexer"
 )
 
+func TestSimpleVarAssign(t *testing.T) {
+	source := `let a = 1
+	`
+
+	lexer := lexer.NewLexer(source)
+	err := lexer.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	parser := NewParser(lexer)
+	program := parser.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if program != nil {
+		if len(program.Statements) != 1 {
+			t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+		}
+	}
+
+	stmt := program.Statements[0]
+	if stmt.(*ast.VarrAssignmentStatement).Name.Value != "a" {
+		t.Errorf("Expected identifier to be a, got %s", stmt.(*ast.VarrAssignmentStatement).Name.Value)
+	}
+
+	if stmt.(*ast.VarrAssignmentStatement).Value.(*ast.IntegerLiteral).Value != 1 {
+		t.Errorf("Expected value to be 1, got %d", stmt.(*ast.VarrAssignmentStatement).Value.(*ast.IntegerLiteral).Value)
+	}
+
+}
+
 func TestVarAssign(t *testing.T) {
 	source := `let a = 1
 	let b = 2
@@ -335,5 +369,110 @@ func TestParseFuncLiteralMultiline(t *testing.T) {
 
 	if right.Value != "y" {
 		t.Errorf("Expected right to be 'y', got %s", right.Value)
+	}
+}
+
+func TestMultipleStatements(t *testing.T) {
+	source := `
+	let f = @(x, y):
+		x + y
+	end
+
+	let g = 100
+	`
+
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 2 {
+		t.Errorf("Expected 2 statements, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.VarrAssignmentStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.LetStatement, got %T", program.Statements[0])
+	}
+
+	if stmt.Name.Value != "f" {
+		t.Errorf("Expected name to be 'f', got %s", stmt.Name.Value)
+	}
+
+	function, ok := stmt.Value.(*ast.FuncLiteral)
+	if !ok {
+		t.Errorf("Expected value to be *ast.FuncLiteral, got %T", stmt.Value)
+	}
+
+	if len(function.Parameters) != 2 {
+		t.Errorf("Expected 2 parameters, got %d", len(function.Parameters))
+	}
+
+	if function.Parameters[0].Str() != "x" {
+		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0])
+	}
+
+	if function.Parameters[1].Str() != "y" {
+		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
+	}
+
+	letStmt := program.Statements[1].(*ast.VarrAssignmentStatement)
+	if letStmt.Name.Value != "g" {
+		t.Errorf("Expected name to be 'g', got %s", letStmt.Name.Value)
+	}
+}
+
+func TestParseFunctionCall(t *testing.T) {
+	source := `f(x, y)`
+
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	call, ok := stmt.Expression.(*ast.CallExpression)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.CallExpression, got %T", stmt.Expression)
+	}
+
+	if call.Function.Str() != "f" {
+		t.Errorf("Expected function to be 'f', got %s", call.Function)
+	}
+
+	if len(call.Arguments) != 2 {
+		t.Errorf("Expected 2 arguments, got %d", len(call.Arguments))
+	}
+
+	if call.Arguments[0].Str() != "x" {
+		t.Errorf("Expected argument to be 'x', got %s", call.Arguments[0])
+	}
+
+	if call.Arguments[1].Str() != "y" {
+		t.Errorf("Expected argument to be 'y', got %s", call.Arguments[1])
 	}
 }

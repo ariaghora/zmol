@@ -147,3 +147,19 @@ func (fl *FuncLiteral) Str() string {
 	}
 	return fl.Token.Text + "(" + params + ")" + fl.Body.Str()
 }
+
+type CallExpression struct {
+	Token     lexer.ZTok // the '(' token
+	Function  Expression // Identifier or FuncLiteral
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode() {}
+func (ce *CallExpression) Literal() string { return ce.Token.Text }
+func (ce *CallExpression) Str() string {
+	args := ""
+	for _, a := range ce.Arguments {
+		args += a.Str() + ", "
+	}
+	return ce.Function.Str() + "(" + args + ")"
+}
