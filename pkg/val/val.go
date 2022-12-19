@@ -7,6 +7,7 @@ type ZValueType string
 const (
 	ZINT   ZValueType = "int"
 	ZFLOAT ZValueType = "float"
+	ZERROR ZValueType = "error"
 )
 
 type ZValue interface {
@@ -38,3 +39,10 @@ type ZString struct {
 
 func (z *ZString) Type() ZValueType { return "string" }
 func (z *ZString) Str() string      { return z.Value }
+
+type ZError struct {
+	Message string
+}
+
+func (z *ZError) Type() ZValueType { return "error" }
+func (z *ZError) Str() string      { return "ERROR: " + z.Message }

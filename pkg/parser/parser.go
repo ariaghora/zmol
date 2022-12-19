@@ -71,6 +71,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
+	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
 
 	return p
 }

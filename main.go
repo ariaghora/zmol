@@ -10,29 +10,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// The interpreter
-type Zmol struct {
-}
-
-type ZValue struct {
-}
-
-func (z *Zmol) Run(code string) *ZValue {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("unexpected problem encountered, aborting")
-			os.Exit(1)
-		}
-	}()
-
-	state := eval.NewZmolState()
-	result := state.Eval(code)
-
-	fmt.Println(result.Str())
-
-	return nil
-}
-
 var Banner = `
  ______     __    __     ______     __        
 /\___  \   /\ "-./  \   /\  __ \   /\ \       
@@ -41,6 +18,33 @@ var Banner = `
   \/_____/   \/_/  \/_/   \/_____/   \/_____/ 
 `
 
+// The interpreter
+type Zmol struct {
+	state *eval.ZmolState
+}
+
+func NewZmol() *Zmol {
+	return &Zmol{
+		state: eval.NewZmolState(),
+	}
+}
+
+func (z *Zmol) Run(code string) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("unexpected problem encountered, aborting")
+			os.Exit(1)
+		}
+	}()
+
+	// state := eval.NewZmolState()
+	result := z.state.Eval(code)
+
+	fmt.Println(result.Str())
+	// fmt.Println(result)
+
+}
+
 func printBanner() {
 	fmt.Println(Banner)
 	fmt.Println("Zmol 0.0.1")
@@ -48,6 +52,7 @@ func printBanner() {
 
 func main() {
 	printBanner()
+	z := NewZmol()
 	for {
 		color.Set(color.FgHiMagenta)
 		fmt.Print(">>> ")
@@ -65,7 +70,6 @@ func main() {
 		case ".exit":
 			os.Exit(0)
 		default: // Run the code
-			z := Zmol{}
 			z.Run(code)
 		}
 	}
