@@ -9,28 +9,14 @@ import (
 	"github.com/ariaghora/zmol/pkg/val"
 )
 
-type Env struct {
-	symTable map[string]val.ZValue
-}
-
 type ZmolState struct {
-	Env *Env
-}
-
-func (e *Env) Get(name string) (val.ZValue, bool) {
-	obj, ok := e.symTable[name]
-	return obj, ok
-}
-
-func (e *Env) Set(name string, val val.ZValue) val.ZValue {
-	e.symTable[name] = val
-	return val
+	Env *val.Env
 }
 
 func NewZmolState() *ZmolState {
 	return &ZmolState{
-		Env: &Env{
-			symTable: make(map[string]val.ZValue),
+		Env: &val.Env{
+			SymTable: make(map[string]val.ZValue),
 		},
 	}
 }
@@ -56,6 +42,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			return val
 		}
 		return s.Env.Set(node.Name.Value, val)
+	case *ast.BlockStatement:
+		return s.evalBlockStatement(node)
 	case *ast.ExpressionStatement:
 		return s.EvalProgram(node.Expression)
 	case *ast.InfixExpression:
@@ -72,6 +60,16 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalIntegerLiteral(node)
 	case *ast.FloatLiteral:
 		return s.evalFloatLiteral(node)
+	case *ast.FuncLiteral:
+		params := node.Parameters
+		body := node.Body
+		return &val.ZFunction{
+			Params: params,
+			Body:   body,
+			Env:    s.Env,
+		}
+	case *ast.CallExpression:
+		return s.evalCallExpression(node)
 	}
 	return nil
 }
@@ -189,6 +187,47 @@ func (s *ZmolState) evalVariableAssignment(node *ast.InfixExpression) val.ZValue
 		return val
 	}
 	return s.Env.Set(node.Left.(*ast.Identifier).Value, val)
+}
+
+func (s *ZmolState) evalBlockStatement(block *ast.BlockStatement) val.ZValue {
+	var result val.ZValue
+	for _, statement := range block.Statements {
+		evaluated := s.EvalProgram(statement)
+		result = evaluated
+	}
+	return result
+}
+
+func (s *ZmolState) evalExpressions(exps []ast.Expression) []val.ZValue {
+	var result []val.ZValue
+
+	for _, e := range exps {
+		evaluated := s.EvalProgram(e)
+		if isErr(evaluated) {
+			return []val.ZValue{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+
+	return result
+}
+
+func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
+	function := s.EvalProgram(node.Function)
+	if isErr(function) {
+		return function
+	}
+	args := s.evalExpressions(node.Arguments)
+	params := function.(*val.ZFunction).Params
+	zState := NewZmolState()
+	for i, arg := range args {
+		if isErr(arg) {
+			return arg
+		}
+		zState.Env.Set(params[i].Value, arg)
+	}
+	evaluated := zState.EvalProgram(function.(*val.ZFunction).Body)
+	return evaluated
 }
 
 func isErr(obj val.ZValue) bool {

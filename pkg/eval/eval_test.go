@@ -22,6 +22,53 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionValue(t *testing.T) {
+	input := "@(x): x + 2 "
+	evaluated := testEval(input)
+	fn, ok := evaluated.(*val.ZFunction)
+	if !ok {
+		t.Fatalf("object is not Function. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if len(fn.Params) != 1 {
+		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Params)
+	}
+
+	if fn.Params[0].Str() != "x" {
+		t.Fatalf("parameter is not 'x'. got=%q", fn.Params[0])
+	}
+
+	if fn.Body.Str() != "(x + 2)" {
+		t.Fatalf("body is not (x + 2). got=%q", fn.Body.Str())
+	}
+}
+
+func TestAnonFunctionCalls(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"(@(x): x + 2)(2)", 4},
+		{"(@(x): x + 2)(3)", 5},
+		{"(@(x): x + x)(4)", 8},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestFunctionCalls(t *testing.T) {
+	source := `
+	add_five = @(x): x + 5
+	add_five(5)
+	`
+
+	evaluated := testEval(source)
+	testIntegerObject(t, evaluated, 10)
+}
+
 func testEval(input string) val.ZValue {
 	state := NewZmolState()
 	return state.Eval(input)

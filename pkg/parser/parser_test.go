@@ -253,36 +253,22 @@ func TestParseFuncLiteral(t *testing.T) {
 		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
 	}
 
-	expr := function.BodySingle
+	expr := function.Body
 	if expr == nil {
 		t.Errorf("Expected single-expr body to be not nil")
 	}
 
-	infix, ok := expr.Expression.(*ast.InfixExpression)
+	if len(expr.Statements) != 1 {
+		t.Errorf("Expected 1 statement in body, got %d", len(expr.Statements))
+	}
+
+	infix, ok := expr.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Errorf("Expected expression to be *ast.InfixExpression, got %T", expr)
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", expr.Statements[0])
 	}
 
-	if infix.Operator != "+" {
-		t.Errorf("Expected operator to be '+', got %s", infix.Operator)
-	}
-
-	left, ok := infix.Left.(*ast.Identifier)
-	if !ok {
-		t.Errorf("Expected left to be *ast.Identifier, got %T", infix.Left)
-	}
-
-	if left.Value != "x" {
-		t.Errorf("Expected left to be 'x', got %s", left.Value)
-	}
-
-	right, ok := infix.Right.(*ast.Identifier)
-	if !ok {
-		t.Errorf("Expected right to be *ast.Identifier, got %T", infix.Right)
-	}
-
-	if right.Value != "y" {
-		t.Errorf("Expected right to be 'y', got %s", right.Value)
+	if infix.Expression.Str() != "(x + y)" {
+		t.Errorf("Expected expression to be (x + y), got %s", infix.Expression.Str())
 	}
 }
 

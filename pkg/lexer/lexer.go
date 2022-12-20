@@ -81,7 +81,9 @@ var KeywordTok = map[string]TokType{
 func (z *ZLex) addIdent() {
 	var nChar int
 	start := z.i
-	for z.i+nChar < len(z.code) && (unicode.IsLetter(rune(z.code[z.i+nChar])) || unicode.IsDigit(rune(z.code[z.i+nChar]))) {
+	for z.i+nChar < len(z.code) && (unicode.IsLetter(rune(z.code[z.i+nChar])) ||
+		unicode.IsDigit(rune(z.code[z.i+nChar])) ||
+		z.code[z.i+nChar] == '_') {
 		nChar++
 	}
 	if tokType, ok := KeywordTok[z.code[start:z.i+nChar]]; ok {

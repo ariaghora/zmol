@@ -37,15 +37,15 @@ end
 
 n_wheels = input() -> int()
 
-if n_wheels == 4: print("maybe a car")
-| n_wheels == 2: print("maybe a motorcycle")
-| n_wheels == 3: print("maybe a bubble car")
+if n_wheels == 4: 
+    if heavy: print("maybe a car") | print("maybe a truck")
+| if n_wheels == 2: print("maybe a motorcycle")
+| if n_wheels == 3: print("maybe a bubble car")
 | print("I don't know what it is")
-end
 
 -- This is also fine:
 
-if n_wheels == 4: 
+? n_wheels == 4: 
     print("maybe a car")
     print("maybe a truck as well")
 | n_wheels == 2: print("maybe a motorcycle")
@@ -71,15 +71,15 @@ end
 ```
 -- Define a function like this. No return statement.
 -- Any last expression in the block is the returned value.
-let is_even = @(x):
+is_even = @(x):
     x % 2 == 0
 end
 
 -- One-line function
-let add = @(x, y): x + y
+add = @(x, y): x + y
 
 -- Recursion
-let fib = @(n): n > 1 ? n + fib(n-1) | 1
+fib = @(n): n > 1 ? n + fib(n-1) | 1
 ```
 
 ## Special operators
@@ -87,27 +87,27 @@ Functional taste, maybe?
 Special operators, operating on iterables, lowest precedence:
 - `|>` Element-wise map
 - `>-` Element-wise filter
-- `->` Pipe: use the output of LHS as the input of function on RHS
+- `->` Pipe: use the evaluated expression on LHS as the input of function on RHS
 ```
-let result = numbers
+result = numbers
     |> scale(3)
     |> minus(1)
     >- is_even
     -> sum
-    -> print
+result -> print
 ```
 
 Parentheses are optional if the function definition has no parameter.
 
 ### Project Euler problem 1
 ```
-let is_divisible = @(x): (x % 3 == 0) && (x % 5 == 0)
+is_divisible = @(x): (x % 3 == 0) && (x % 5 == 0)
 [1 ... 1000] >- is_divisible -> sum -> print
 ```
 
 ### Guessing game
 ```
-let answer = 42
+answer = 42
 while (let in = input() -> int) != answer:
     let message = if in > answer: "too high"
     | in < answer: "too low"

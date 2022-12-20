@@ -64,6 +64,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
+	p.registerPrefix(lexer.TokLParen, p.parseGroupedExpression)
 
 	p.infixParseFns = make(map[lexer.TokType]infixParseFn)
 	p.registerInfix(lexer.TokPlus, p.parseInfixExpression)
@@ -243,12 +244,13 @@ func (p *Parser) parseFuncLiteral() ast.Expression {
 	// if p.expectPeek(lexer.TokNewLine) {
 	if p.peekTok.Type == lexer.TokNewLine {
 		p.skipLinebreak()
-		lit.Multiline = true
+		// lit.Multiline = true
 		lit.Body = p.parseBlockStatement()
 	} else {
 		p.nextToken()
-		lit.Multiline = false
-		lit.BodySingle = p.parseExpressionStatement()
+		// lit.Multiline = false
+		stmt := p.parseExpressionStatement()
+		lit.Body = &ast.BlockStatement{Token: p.curTok, Statements: []ast.Statement{stmt}}
 	}
 
 	return lit
@@ -331,6 +333,18 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 	}
 
 	return args
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(PrecLowest)
+
+	if !p.expectPeek(lexer.TokRParen) {
+		return nil
+	}
+
+	return exp
 }
 
 func (p *Parser) peekError(t lexer.TokType) {

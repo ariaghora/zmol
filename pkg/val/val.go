@@ -1,6 +1,10 @@
 package val
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ariaghora/zmol/pkg/ast"
+)
 
 type ZValueType string
 
@@ -9,6 +13,20 @@ const (
 	ZFLOAT ZValueType = "float"
 	ZERROR ZValueType = "error"
 )
+
+type Env struct {
+	SymTable map[string]ZValue
+}
+
+func (e *Env) Get(name string) (ZValue, bool) {
+	obj, ok := e.SymTable[name]
+	return obj, ok
+}
+
+func (e *Env) Set(name string, val ZValue) ZValue {
+	e.SymTable[name] = val
+	return val
+}
 
 type ZValue interface {
 	Type() ZValueType
@@ -46,3 +64,12 @@ type ZError struct {
 
 func (z *ZError) Type() ZValueType { return "error" }
 func (z *ZError) Str() string      { return "ERROR: " + z.Message }
+
+type ZFunction struct {
+	Params []*ast.Identifier
+	Body   *ast.BlockStatement
+	Env    *Env
+}
+
+func (z *ZFunction) Type() ZValueType { return "function" }
+func (z *ZFunction) Str() string      { return "function" }

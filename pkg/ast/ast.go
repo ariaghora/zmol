@@ -134,8 +134,6 @@ type FuncLiteral struct {
 	Token      lexer.ZTok // the 'fn' token
 	Parameters []*Identifier
 	Body       *BlockStatement
-	BodySingle *ExpressionStatement
-	Multiline  bool
 }
 
 func (fl *FuncLiteral) expressionNode() {}
