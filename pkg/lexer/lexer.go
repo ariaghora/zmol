@@ -13,6 +13,7 @@ const (
 	TokSlash           = "/"
 	TokAster           = "*"
 	TokEq              = "=="
+	TokNotEq           = "!="
 	TokGt              = ">"
 	TokGTE             = ">="
 	TokLt              = "<"
@@ -26,6 +27,7 @@ const (
 	TokLParen          = "("
 	TokRParen          = ")"
 	TokColon           = ":"
+	TokNot             = "!"
 	TokLet             = "let"
 	TokNewLine         = "LINEBREAK"
 	TokEOF             = "EOF"
@@ -67,6 +69,7 @@ var SingularTokOps = map[rune]TokType{
 	')':  TokRParen,
 	'\n': TokNewLine,
 	':':  TokColon,
+	'!':  TokNot,
 }
 
 var KeywordTok = map[string]TokType{
@@ -136,6 +139,10 @@ func (z *ZLex) Lex() error {
 				z.addTok(TokGTE, 2)
 			} else if z.code[z.i] == '<' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokLTE, 2)
+			} else if z.code[z.i] == '=' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
+				z.addTok(TokEq, 2)
+			} else if z.code[z.i] == '!' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
+				z.addTok(TokNotEq, 2)
 			} else {
 				z.addTok(tokType, 1)
 			}

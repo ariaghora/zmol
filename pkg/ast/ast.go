@@ -90,6 +90,15 @@ func (fl *FloatLiteral) expressionNode() {}
 func (ie *FloatLiteral) Literal() string { return ie.Token.Text }
 func (ie *FloatLiteral) Str() string     { return ie.Token.Text }
 
+type BooleanLiteral struct {
+	Token lexer.ZTok
+	Value bool
+}
+
+func (bl *BooleanLiteral) expressionNode() {}
+func (bl *BooleanLiteral) Literal() string { return bl.Token.Text }
+func (bl *BooleanLiteral) Str() string     { return bl.Token.Text }
+
 type InfixExpression struct {
 	Token    lexer.ZTok // the operator token, e.g. +
 	Left     Expression

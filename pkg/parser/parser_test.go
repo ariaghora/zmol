@@ -212,6 +212,72 @@ func TestParseInfix(t *testing.T) {
 	}
 }
 
+func TestBoolInfix(t *testing.T) {
+	tests := []struct {
+		input    string
+		left     bool
+		operator string
+		right    bool
+	}{
+		{"true == true", true, "==", true},
+		{"true != true", true, "!=", true},
+		// {"true == false", true, "==", false},
+		// {"true != false", true, "!=", false},
+		// {"false == true", false, "==", true},
+		// {"false != true", false, "!=", true},
+		// {"false == false", false, "==", false},
+		// {"false != false", false, "!=", false},
+	}
+
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		err := l.Lex()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		p := NewParser(l)
+		program := p.ParseProgram()
+
+		if program == nil {
+			t.Errorf("ParseProgram() returned nil")
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+		}
+
+		infix, ok := stmt.Expression.(*ast.InfixExpression)
+		if !ok {
+			t.Errorf("Expected expression to be *ast.InfixExpression, got %T", stmt.Expression)
+		}
+
+		if infix.Operator != tt.operator {
+			t.Errorf("Expected operator to be %s, got %s", tt.operator, infix.Operator)
+		}
+
+		left, ok := infix.Left.(*ast.BooleanLiteral)
+		if !ok {
+			t.Errorf("Expected left to be *ast.BooleanLiteral, got %T", infix.Left)
+		}
+
+		if left.Value != tt.left {
+			t.Errorf("Expected left to be %t, got %t", tt.left, left.Value)
+		}
+
+		right, ok := infix.Right.(*ast.BooleanLiteral)
+		if !ok {
+			t.Errorf("Expected right to be *ast.BooleanLiteral, got %T", infix.Right)
+		}
+
+		if right.Value != tt.right {
+			t.Errorf("Expected right to be %t, got %t", tt.right, right.Value)
+		}
+
+	}
+}
+
 func TestParseFuncLiteral(t *testing.T) {
 	source := "@(x, y): x + y"
 	l := lexer.NewLexer(source)

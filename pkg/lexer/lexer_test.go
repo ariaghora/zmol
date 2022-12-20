@@ -99,7 +99,7 @@ func TestTwoCharOpsSeq(t *testing.T) {
 }
 
 func TestInvalidTokenShouldFail(t *testing.T) {
-	lexer := NewLexer("!")
+	lexer := NewLexer("$")
 	err := lexer.Lex()
 	if err == nil {
 		t.Errorf("Expected error, got nil")

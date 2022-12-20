@@ -22,13 +22,20 @@ const (
 
 var precedences = map[lexer.TokType]int{
 	lexer.TokAssign: PrecAssign,
-	lexer.TokEq:     PrecEquals,
+
+	// Boolean operators
+	lexer.TokEq:    PrecEquals,
+	lexer.TokNotEq: PrecEquals,
+	lexer.TokGt:    PrecGtLt,
+	lexer.TokLt:    PrecGtLt,
+	lexer.TokGTE:   PrecGtLt,
+	lexer.TokLTE:   PrecGtLt,
+
+	// Arithmetic operators
 	lexer.TokPlus:   PrecAddSub,
 	lexer.TokMinus:  PrecAddSub,
 	lexer.TokSlash:  PrecProd,
 	lexer.TokAster:  PrecProd,
-	lexer.TokLt:     PrecGtLt,
-	lexer.TokGt:     PrecGtLt,
 	lexer.TokLParen: PrecCall,
 }
 
@@ -61,6 +68,8 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokIdent, p.parseIdentifier)
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
 	p.registerPrefix(lexer.TokFloat, p.parseFloatLiteral)
+	p.registerPrefix(lexer.TokTrue, p.parseBooleanLiteral)
+	p.registerPrefix(lexer.TokFalse, p.parseBooleanLiteral)
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
@@ -73,6 +82,13 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
+
+	p.registerInfix(lexer.TokEq, p.parseInfixExpression)
+	p.registerInfix(lexer.TokNotEq, p.parseInfixExpression)
+	p.registerInfix(lexer.TokLt, p.parseInfixExpression)
+	p.registerInfix(lexer.TokLTE, p.parseInfixExpression)
+	p.registerInfix(lexer.TokGt, p.parseInfixExpression)
+	p.registerInfix(lexer.TokGTE, p.parseInfixExpression)
 
 	return p
 }
@@ -199,6 +215,10 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parseBooleanLiteral() ast.Expression {
+	return &ast.BooleanLiteral{Token: p.curTok, Value: p.curTok.Type == lexer.TokTrue}
 }
 
 func (p *Parser) parserPrefixExpression() ast.Expression {
