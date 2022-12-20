@@ -13,6 +13,10 @@ const (
 	TokSlash            = "/"
 	TokAster            = "*"
 	TokMod              = "%"
+	TokAnd              = "&&"
+	TokOr               = "||"
+	TokBitAnd           = "&"
+	TokBitOr            = "|"
 	TokEq               = "=="
 	TokNotEq            = "!="
 	TokGt               = ">"
@@ -61,6 +65,8 @@ var SingularTokOps = map[rune]TokType{
 	'*':  TokAster,
 	'/':  TokSlash,
 	'%':  TokMod,
+	'&':  TokBitAnd,
+	'|':  TokBitOr,
 	'>':  TokGt,
 	'<':  TokLt,
 	'.':  TokDot,
@@ -147,6 +153,10 @@ func (z *ZLex) Lex() error {
 				z.addTok(TokEq, 2)
 			} else if z.code[z.i] == '!' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokNotEq, 2)
+			} else if z.code[z.i] == '&' && z.i+1 < len(z.code) && z.code[z.i+1] == '&' {
+				z.addTok(TokAnd, 2)
+			} else if z.code[z.i] == '|' && z.i+1 < len(z.code) && z.code[z.i+1] == '|' {
+				z.addTok(TokOr, 2)
 			} else {
 				z.addTok(tokType, 1)
 			}

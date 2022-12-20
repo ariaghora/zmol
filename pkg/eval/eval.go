@@ -53,7 +53,9 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		case "=":
 			return s.evalVariableAssignment(node)
 		case "==", "!=", "<", ">", "<=", ">=":
-			return s.evalComparisonExpression(node)
+			return s.evalBooleanExpression(node)
+		case "&&", "||":
+			return s.evalLogicalExpression(node)
 		default:
 			left := s.EvalProgram(node.Left)
 			right := s.EvalProgram(node.Right)
@@ -113,7 +115,7 @@ func (s *ZmolState) evalListLiteral(ll *ast.ListLiteral) val.ZValue {
 	return &val.ZList{Elements: elements}
 }
 
-func (s *ZmolState) evalComparisonExpression(node *ast.InfixExpression) val.ZValue {
+func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue {
 	left := s.EvalProgram(node.Left)
 	right := s.EvalProgram(node.Right)
 
@@ -130,6 +132,26 @@ func (s *ZmolState) evalComparisonExpression(node *ast.InfixExpression) val.ZVal
 		return left.LessThanEquals(right)
 	case ">=":
 		return left.GreaterThanEquals(right)
+	}
+	return nil
+}
+
+func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue {
+	left := s.EvalProgram(node.Left)
+	if isErr(left) {
+		return left
+	}
+	switch node.Operator {
+	case "&&":
+		if left.(*val.ZBool).Value {
+			return s.EvalProgram(node.Right)
+		}
+		return left
+	case "||":
+		if !left.(*val.ZBool).Value {
+			return s.EvalProgram(node.Right)
+		}
+		return left
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 	zState.Env.Set("print", &val.ZNativeFunc{Fn: Z_print})
 	zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
 	zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
+	zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
 }
 
 func Z_print(args ...val.ZValue) val.ZValue {
