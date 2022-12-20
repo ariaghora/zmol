@@ -1,0 +1,45 @@
+package native
+
+import (
+	"github.com/ariaghora/zmol/pkg/eval"
+	"github.com/ariaghora/zmol/pkg/val"
+)
+
+func Z_filter(args ...val.ZValue) val.ZValue {
+	if len(args) != 2 {
+		return &val.ZError{Message: "filter takes 2 arguments"}
+	}
+	list := args[0]
+	fn := args[1]
+	if list.Type() != val.ZLIST || fn.Type() != val.ZFUNCTION {
+		return &val.ZError{Message: "filter takes a list and a function"}
+	}
+
+	// check if number of arguments in function is 1
+	if len(fn.(*val.ZFunction).Params) != 1 {
+		return &val.ZError{Message: "filter takes a function with 1 argument"}
+	}
+
+	actualFn := fn.(*val.ZFunction)
+	zState := eval.NewZmolState(actualFn.Env)
+
+	element := []val.ZValue{}
+
+	for _, e := range list.(*val.ZList).Elements {
+		actualFn.Env.Set(actualFn.Params[0].Value, e)
+		isTrue := zState.EvalProgram(actualFn.Body)
+
+		// check if return value is boolean
+		if isTrue.Type() != val.ZBOOL {
+			return &val.ZError{Message: "filter takes a function that returns a boolean"}
+		}
+		if isTrue.(*val.ZBool).Value {
+			element = append(element, e)
+		}
+	}
+
+	list = &val.ZList{
+		Elements: element,
+	}
+	return list
+}

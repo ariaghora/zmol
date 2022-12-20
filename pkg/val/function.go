@@ -1,6 +1,8 @@
 package val
 
-import "github.com/ariaghora/zmol/pkg/ast"
+import (
+	"github.com/ariaghora/zmol/pkg/ast"
+)
 
 // Function type
 type ZFunction struct {
@@ -11,14 +13,14 @@ type ZFunction struct {
 
 func (z *ZFunction) Type() ZValueType { return ZFUNCTION }
 func (z *ZFunction) Str() string      { return "Function" }
-func (z *ZFunction) Equals(other ZValue) bool {
-	if other.Type() != ZFUNCTION {
-		return false
-	}
-	return false
+func (z *ZFunction) Equals(other ZValue) ZValue {
+	return ERROR("Operator '==' not defined for functions")
 }
-func (z *ZFunction) LessThanEquals(other ZValue) bool {
-	return false
+func (z *ZFunction) LessThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '<=' not defined for functions")
+}
+func (z *ZFunction) GreaterThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '>=' not defined for functions")
 }
 
 // Native built-in function type
@@ -28,12 +30,12 @@ type ZNativeFunc struct {
 
 func (z *ZNativeFunc) Type() ZValueType { return ZNATIVE }
 func (z *ZNativeFunc) Str() string      { return "NativeFunction" }
-func (z *ZNativeFunc) Equals(other ZValue) bool {
-	if other.Type() != ZNATIVE {
-		return false
-	}
-	return false
+func (z *ZNativeFunc) Equals(other ZValue) ZValue {
+	return ERROR("Operator '==' not defined for functions")
 }
-func (z *ZNativeFunc) LessThanEquals(other ZValue) bool {
-	return false
+func (z *ZNativeFunc) LessThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '<=' not defined for functions")
+}
+func (z *ZNativeFunc) GreaterThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '<=' not defined for functions")
 }

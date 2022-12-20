@@ -7,15 +7,16 @@ type ZString struct {
 
 func (z *ZString) Type() ZValueType { return ZSTRING }
 func (z *ZString) Str() string      { return z.Value }
-func (z *ZString) Equals(other ZValue) bool {
+func (z *ZString) Equals(other ZValue) ZValue {
 	if other.Type() != ZSTRING {
-		return false
+		return BOOL(false)
 	}
-	return z.Value == other.(*ZString).Value
+	return BOOL(z.Value == other.(*ZString).Value)
 }
-func (z *ZString) LessThanEquals(other ZValue) bool {
-	if other.Type() != ZSTRING {
-		return false
-	}
-	return z.Value <= other.(*ZString).Value
+func (z *ZString) LessThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '<=' not defined for string")
+}
+
+func (z *ZString) GreaterThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '>=' not defined for string")
 }

@@ -36,17 +36,7 @@ func (e *Env) Set(name string, val ZValue) ZValue {
 type ZValue interface {
 	Type() ZValueType
 	Str() string
-	Equals(other ZValue) bool
-	LessThanEquals(other ZValue) bool
-}
-
-type ZNull struct{}
-
-func (z *ZNull) Type() ZValueType { return ZNULL }
-func (z *ZNull) Str() string      { return "" }
-func (z *ZNull) Equals(other ZValue) bool {
-	return other.Type() == ZNULL
-}
-func (z *ZNull) LessThanEquals(other ZValue) bool {
-	return other.Type() == ZNULL
+	Equals(other ZValue) ZValue
+	LessThanEquals(other ZValue) ZValue
+	GreaterThanEquals(other ZValue) ZValue
 }

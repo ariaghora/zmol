@@ -24,12 +24,14 @@ func (zl *ZList) Literal() string {
 	return zl.Str()
 }
 
-func (zl *ZList) Equals(other ZValue) bool {
-	// cannot compare lists
-	return false
+func (zl *ZList) Equals(other ZValue) ZValue {
+	return ERROR("Operator '==' not defined for list")
 }
 
-func (zl *ZList) LessThanEquals(other ZValue) bool {
-	// cannot compare lists
-	return false
+func (zl *ZList) LessThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '<=' not defined for list")
+}
+
+func (zl *ZList) GreaterThanEquals(other ZValue) ZValue {
+	return ERROR("Operator '>=' not defined for list")
 }

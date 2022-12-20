@@ -119,17 +119,17 @@ func (s *ZmolState) evalComparisonExpression(node *ast.InfixExpression) val.ZVal
 
 	switch node.Operator {
 	case "==":
-		return &val.ZBool{Value: left.Equals(right)}
-	case "!=":
-		return &val.ZBool{Value: !left.Equals(right)}
+		return left.Equals(right)
+	// case "!=":
+	// 	return &val.ZBool{Value: !left.Equals(right)
 	// case "<":
 	// 	return &val.ZBool{Value: left.LessThan(right)}
 	// case ">":
 	// 	return &val.ZBool{Value: left.GreaterThan(right)}
 	case "<=":
-		return &val.ZBool{Value: left.LessThanEquals(right)}
-		// case ">=":
-		// 	return &val.ZBool{Value: left.GreaterThanEquals(right)}
+		return left.LessThanEquals(right)
+	case ">=":
+		return left.GreaterThanEquals(right)
 	}
 	return nil
 }
