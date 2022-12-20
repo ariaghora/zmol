@@ -13,10 +13,11 @@ type ZmolState struct {
 	Env *val.Env
 }
 
-func NewZmolState() *ZmolState {
+func NewZmolState(ParentEnv *val.Env) *ZmolState {
 	return &ZmolState{
 		Env: &val.Env{
-			SymTable: make(map[string]val.ZValue),
+			SymTable:  make(map[string]val.ZValue),
+			ParentEnv: ParentEnv,
 		},
 	}
 }
@@ -219,7 +220,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 	}
 	args := s.evalExpressions(node.Arguments)
 	params := function.(*val.ZFunction).Params
-	zState := NewZmolState()
+	zState := NewZmolState(s.Env)
 	for i, arg := range args {
 		if isErr(arg) {
 			return arg

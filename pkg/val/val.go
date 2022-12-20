@@ -15,11 +15,15 @@ const (
 )
 
 type Env struct {
-	SymTable map[string]ZValue
+	SymTable  map[string]ZValue
+	ParentEnv *Env
 }
 
 func (e *Env) Get(name string) (ZValue, bool) {
 	obj, ok := e.SymTable[name]
+	if !ok && e.ParentEnv != nil {
+		return e.ParentEnv.Get(name)
+	}
 	return obj, ok
 }
 

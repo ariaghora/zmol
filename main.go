@@ -25,7 +25,7 @@ type Zmol struct {
 
 func NewZmol() *Zmol {
 	return &Zmol{
-		state: eval.NewZmolState(),
+		state: eval.NewZmolState(nil),
 	}
 }
 

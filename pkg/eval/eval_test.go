@@ -67,10 +67,19 @@ func TestFunctionCalls(t *testing.T) {
 
 	evaluated := testEval(source)
 	testIntegerObject(t, evaluated, 10)
+
+	sourceWithGlobal := `
+	val = 5
+	add_five = @(x): x + val
+	add_five(5)
+	`
+
+	evaluated = testEval(sourceWithGlobal)
+	testIntegerObject(t, evaluated, 10)
 }
 
 func testEval(input string) val.ZValue {
-	state := NewZmolState()
+	state := NewZmolState(nil)
 	return state.Eval(input)
 }
 
