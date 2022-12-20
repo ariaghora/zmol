@@ -14,9 +14,10 @@ type ZmolState struct {
 }
 
 func NewZmolState(ParentEnv *val.Env) *ZmolState {
+	symTable := make(map[string]val.ZValue)
 	return &ZmolState{
 		Env: &val.Env{
-			SymTable:  make(map[string]val.ZValue),
+			SymTable:  symTable,
 			ParentEnv: ParentEnv,
 		},
 	}
@@ -58,7 +59,6 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			right := s.EvalProgram(node.Right)
 			return s.evalInfixExpression(node.Operator, left, right)
 		}
-
 	case *ast.IntegerLiteral:
 		return s.evalIntegerLiteral(node)
 	case *ast.FloatLiteral:
@@ -250,6 +250,10 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 		return function
 	}
 	args := s.evalExpressions(node.Arguments)
+	if function.Type() == val.ZNATIVE {
+		return function.(*val.ZNativeFunc).Fn(args...)
+	}
+
 	params := function.(*val.ZFunction).Params
 	zState := NewZmolState(s.Env)
 	for i, arg := range args {

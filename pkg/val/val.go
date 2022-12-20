@@ -3,12 +3,14 @@ package val
 type ZValueType string
 
 const (
-	ZINT      ZValueType = "int"
-	ZFLOAT    ZValueType = "float"
-	ZBOOL     ZValueType = "bool"
-	ZERROR    ZValueType = "error"
-	ZSTRING   ZValueType = "string"
-	ZFUNCTION ZValueType = "function"
+	ZINT      ZValueType = "Int"
+	ZFLOAT    ZValueType = "Float"
+	ZBOOL     ZValueType = "Bool"
+	ZERROR    ZValueType = "Error"
+	ZSTRING   ZValueType = "String"
+	ZFUNCTION ZValueType = "Function"
+	ZNATIVE   ZValueType = "BuiltinFunction"
+	ZNULL     ZValueType = "Null"
 )
 
 type Env struct {
@@ -35,4 +37,15 @@ type ZValue interface {
 	Str() string
 	Equals(other ZValue) bool
 	LessThanEquals(other ZValue) bool
+}
+
+type ZNull struct{}
+
+func (z *ZNull) Type() ZValueType { return ZNULL }
+func (z *ZNull) Str() string      { return "" }
+func (z *ZNull) Equals(other ZValue) bool {
+	return other.Type() == ZNULL
+}
+func (z *ZNull) LessThanEquals(other ZValue) bool {
+	return other.Type() == ZNULL
 }

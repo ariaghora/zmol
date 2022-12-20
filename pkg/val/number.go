@@ -7,7 +7,7 @@ type ZInt struct {
 	Value int64
 }
 
-func (z *ZInt) Type() ZValueType { return "int" }
+func (z *ZInt) Type() ZValueType { return ZINT }
 func (z *ZInt) Str() string {
 	return fmt.Sprintf("%d", z.Value)
 }
@@ -34,7 +34,7 @@ type ZFloat struct {
 	Value float64
 }
 
-func (z *ZFloat) Type() ZValueType { return "float" }
+func (z *ZFloat) Type() ZValueType { return ZFLOAT }
 func (z *ZFloat) Str() string {
 	return fmt.Sprintf("%f", z.Value)
 }

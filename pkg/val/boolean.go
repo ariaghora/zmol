@@ -5,7 +5,7 @@ type ZBool struct {
 	Value bool
 }
 
-func (z *ZBool) Type() ZValueType { return "bool" }
+func (z *ZBool) Type() ZValueType { return ZBOOL }
 func (z *ZBool) Str() string {
 	if z.Value {
 		return "true"

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ariaghora/zmol/pkg/eval"
+	"github.com/ariaghora/zmol/pkg/native"
 	"github.com/fatih/color"
 )
 
@@ -30,12 +31,12 @@ func NewZmol() *Zmol {
 }
 
 func (z *Zmol) Run(code string) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("unexpected problem encountered, aborting")
-			os.Exit(1)
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		fmt.Println("unexpected problem encountered, aborting")
+	// 		os.Exit(1)
+	// 	}
+	// }()
 
 	// state := eval.NewZmolState()
 	result := z.state.Eval(code)
@@ -52,7 +53,10 @@ func printBanner() {
 
 func main() {
 	printBanner()
+
 	z := NewZmol()
+	native.RegisterNativeFunc(z.state)
+
 	for {
 		color.Set(color.FgHiMagenta)
 		fmt.Print(">>> ")
