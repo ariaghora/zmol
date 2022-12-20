@@ -99,6 +99,22 @@ func (bl *BooleanLiteral) expressionNode() {}
 func (bl *BooleanLiteral) Literal() string { return bl.Token.Text }
 func (bl *BooleanLiteral) Str() string     { return bl.Token.Text }
 
+type ListLiteral struct {
+	Token    lexer.ZTok // the '[' token
+	Elements []Expression
+}
+
+func (ll *ListLiteral) expressionNode() {}
+func (ll *ListLiteral) Literal() string { return ll.Token.Text }
+func (ll *ListLiteral) Str() string {
+	out := "["
+	for _, e := range ll.Elements {
+		out += e.Str() + ", "
+	}
+	out += "]"
+	return out
+}
+
 type InfixExpression struct {
 	Token    lexer.ZTok // the operator token, e.g. +
 	Left     Expression

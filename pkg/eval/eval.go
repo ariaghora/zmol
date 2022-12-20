@@ -65,6 +65,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalFloatLiteral(node)
 	case *ast.BooleanLiteral:
 		return s.evalBooleanLiteral(node)
+	case *ast.ListLiteral:
+		return s.evalListLiteral(node)
 	case *ast.FuncLiteral:
 		params := node.Parameters
 		body := node.Body
@@ -101,6 +103,14 @@ func (s *ZmolState) evalFloatLiteral(fl *ast.FloatLiteral) val.ZValue {
 
 func (s *ZmolState) evalBooleanLiteral(bl *ast.BooleanLiteral) val.ZValue {
 	return &val.ZBool{Value: bl.Value}
+}
+
+func (s *ZmolState) evalListLiteral(ll *ast.ListLiteral) val.ZValue {
+	var elements []val.ZValue
+	for _, element := range ll.Elements {
+		elements = append(elements, s.EvalProgram(element))
+	}
+	return &val.ZList{Elements: elements}
 }
 
 func (s *ZmolState) evalComparisonExpression(node *ast.InfixExpression) val.ZValue {

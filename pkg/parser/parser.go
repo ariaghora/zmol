@@ -78,6 +78,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
 	p.registerPrefix(lexer.TokLParen, p.parseGroupedExpression)
+	p.registerPrefix(lexer.TokLBrac, p.parseListLiteral)
 
 	p.infixParseFns = make(map[lexer.TokType]infixParseFn)
 	p.registerInfix(lexer.TokPlus, p.parseInfixExpression)
@@ -224,6 +225,36 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 
 func (p *Parser) parseBooleanLiteral() ast.Expression {
 	return &ast.BooleanLiteral{Token: p.curTok, Value: p.curTok.Type == lexer.TokTrue}
+}
+
+func (p *Parser) parseListLiteral() ast.Expression {
+	list := &ast.ListLiteral{Token: p.curTok}
+	list.Elements = p.parseExpressionList(lexer.TokRBrac)
+	return list
+}
+
+func (p *Parser) parseExpressionList(end lexer.TokType) []ast.Expression {
+	list := []ast.Expression{}
+
+	if p.peekTok.Type == end {
+		p.nextToken()
+		return list
+	}
+
+	p.nextToken()
+	list = append(list, p.parseExpression(PrecLowest))
+
+	for p.peekTok.Type == lexer.TokComma {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(PrecLowest))
+	}
+
+	if !p.expectPeek(end) {
+		return nil
+	}
+
+	return list
 }
 
 func (p *Parser) parserPrefixExpression() ast.Expression {

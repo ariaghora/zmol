@@ -6,6 +6,7 @@ const (
 	ZINT      ZValueType = "Int"
 	ZFLOAT    ZValueType = "Float"
 	ZBOOL     ZValueType = "Bool"
+	ZLIST     ZValueType = "List"
 	ZERROR    ZValueType = "Error"
 	ZSTRING   ZValueType = "String"
 	ZFUNCTION ZValueType = "Function"

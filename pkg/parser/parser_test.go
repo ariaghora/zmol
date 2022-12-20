@@ -571,3 +571,50 @@ func TestParseTernary(t *testing.T) {
 		t.Errorf("Expected alternative to be 'z', got %s", ternary.Alternative)
 	}
 }
+
+func TestParseList(t *testing.T) {
+	source := `[1, 2, 3]`
+
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	list, ok := stmt.Expression.(*ast.ListLiteral)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.ListLiteral, got %T", stmt.Expression)
+	}
+
+	if len(list.Elements) != 3 {
+		t.Errorf("Expected 3 elements, got %d", len(list.Elements))
+	}
+
+	if list.Elements[0].Str() != "1" {
+		t.Errorf("Expected element to be '1', got %s", list.Elements[0])
+	}
+
+	if list.Elements[1].Str() != "2" {
+		t.Errorf("Expected element to be '2', got %s", list.Elements[1])
+	}
+
+	if list.Elements[2].Str() != "3" {
+		t.Errorf("Expected element to be '3', got %s", list.Elements[2])
+	}
+}

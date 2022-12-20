@@ -38,12 +38,8 @@ func (z *Zmol) Run(code string) {
 	// 	}
 	// }()
 
-	// state := eval.NewZmolState()
 	result := z.state.Eval(code)
-
 	fmt.Println(result.Str())
-	// fmt.Println(result)
-
 }
 
 func printBanner() {
@@ -52,29 +48,38 @@ func printBanner() {
 }
 
 func main() {
-	printBanner()
-
 	z := NewZmol()
 	native.RegisterNativeFunc(z.state)
 
-	for {
-		color.Set(color.FgHiMagenta)
-		fmt.Print(">>> ")
-		color.Unset()
-
-		in := bufio.NewReader(os.Stdin)
-		code, err := in.ReadString('\n')
+	if len(os.Args) > 1 {
+		fileName := os.Args[1]
+		sourceCode, err := os.ReadFile(fileName)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		code = strings.TrimSpace(code)
+		z.state.Eval(string(sourceCode))
+	} else {
+		printBanner()
+		for {
+			color.Set(color.FgHiMagenta)
+			fmt.Print(">>> ")
+			color.Unset()
 
-		switch code {
-		case ".exit":
-			os.Exit(0)
-		default: // Run the code
-			z.Run(code)
+			in := bufio.NewReader(os.Stdin)
+			code, err := in.ReadString('\n')
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			code = strings.TrimSpace(code)
+
+			switch code {
+			case ".exit":
+				os.Exit(0)
+			default: // Run the code
+				z.Run(code)
+			}
 		}
 	}
 }
