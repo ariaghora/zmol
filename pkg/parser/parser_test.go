@@ -528,3 +528,46 @@ func TestParseFunctionCall(t *testing.T) {
 		t.Errorf("Expected argument to be 'y', got %s", call.Arguments[1])
 	}
 }
+
+func TestParseTernary(t *testing.T) {
+	source := `x ? y : z`
+
+	l := lexer.NewLexer(source)
+	err := l.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	p := NewParser(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Errorf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Errorf("Expected 1 statement, got %d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("Expected statement to be *ast.ExpressionStatement, got %T", program.Statements[0])
+	}
+
+	ternary, ok := stmt.Expression.(*ast.TernaryExpression)
+	if !ok {
+		t.Errorf("Expected expression to be *ast.TernaryExpression, got %T", stmt.Expression)
+	}
+
+	if ternary.Condition.Str() != "x" {
+		t.Errorf("Expected condition to be 'x', got %s", ternary.Condition)
+	}
+
+	if ternary.Consequence.Str() != "y" {
+		t.Errorf("Expected consequence to be 'y', got %s", ternary.Consequence)
+	}
+
+	if ternary.Alternative.Str() != "z" {
+		t.Errorf("Expected alternative to be 'z', got %s", ternary.Alternative)
+	}
+}

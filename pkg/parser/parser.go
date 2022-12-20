@@ -11,13 +11,14 @@ import (
 const (
 	_ int = iota
 	PrecLowest
-	PrecAssign // =
-	PrecEquals // ==
-	PrecGtLt   // > or <
-	PrecAddSub // +
-	PrecProd   // *
-	PrecPrefix // -X or !X
-	PrecCall   // myFunction(X)
+	PrecAssign  // =
+	PrecTernary // ?:
+	PrecEquals  // ==
+	PrecGtLt    // > or <
+	PrecAddSub  // +
+	PrecProd    // *
+	PrecPrefix  // -X or !X
+	PrecCall    // myFunction(X)
 )
 
 var precedences = map[lexer.TokType]int{
@@ -37,6 +38,9 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokSlash:  PrecProd,
 	lexer.TokAster:  PrecProd,
 	lexer.TokLParen: PrecCall,
+
+	// Ternary operator
+	lexer.TokQuestion: PrecTernary,
 }
 
 type (
@@ -80,7 +84,6 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokMinus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
-	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
 
 	p.registerInfix(lexer.TokEq, p.parseInfixExpression)
@@ -90,6 +93,8 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokGt, p.parseInfixExpression)
 	p.registerInfix(lexer.TokGTE, p.parseInfixExpression)
 
+	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
+	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)
 	return p
 }
 
@@ -328,6 +333,25 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	}
 
 	exp.Arguments = p.parseCallArguments()
+	return exp
+}
+
+func (p *Parser) parserTernaryExpression(condition ast.Expression) ast.Expression {
+	exp := &ast.TernaryExpression{
+		Token:     p.curTok,
+		Condition: condition,
+	}
+
+	p.nextToken()
+	exp.Consequence = p.parseExpression(PrecLowest)
+
+	if !p.expectPeek(lexer.TokColon) {
+		return nil
+	}
+
+	p.nextToken()
+	exp.Alternative = p.parseExpression(PrecLowest)
+
 	return exp
 }
 

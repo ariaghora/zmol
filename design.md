@@ -37,10 +37,10 @@ end
 
 n_wheels = input() -> int()
 
-if n_wheels == 4: 
-    if heavy: print("maybe a car") | print("maybe a truck")
-| if n_wheels == 2: print("maybe a motorcycle")
-| if n_wheels == 3: print("maybe a bubble car")
+n_wheels == 4? 
+    heavy? print("maybe a car") | print("maybe a truck")
+| n_wheels == 2? print("maybe a motorcycle")
+| n_wheels == 3? print("maybe a bubble car")
 | print("I don't know what it is")
 
 -- This is also fine:

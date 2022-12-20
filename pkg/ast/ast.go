@@ -170,3 +170,16 @@ func (ce *CallExpression) Str() string {
 	}
 	return ce.Function.Str() + "(" + args + ")"
 }
+
+type TernaryExpression struct {
+	Token       lexer.ZTok // the '?' token
+	Condition   Expression
+	Consequence Expression
+	Alternative Expression
+}
+
+func (te *TernaryExpression) expressionNode() {}
+func (te *TernaryExpression) Literal() string { return te.Token.Text }
+func (te *TernaryExpression) Str() string {
+	return te.Condition.Str() + "?" + te.Consequence.Str() + ":" + te.Alternative.Str()
+}

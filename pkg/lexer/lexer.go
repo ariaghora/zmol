@@ -8,37 +8,38 @@ import (
 type TokType string
 
 const (
-	TokPlus    TokType = "+"
-	TokMinus           = "-"
-	TokSlash           = "/"
-	TokAster           = "*"
-	TokEq              = "=="
-	TokNotEq           = "!="
-	TokGt              = ">"
-	TokGTE             = ">="
-	TokLt              = "<"
-	TokLTE             = "<="
-	TokDot             = "."
-	TokComma           = ","
-	TokLBrac           = "["
-	TokRBrac           = "]"
-	TokAssign          = "="
-	TokAt              = "@"
-	TokLParen          = "("
-	TokRParen          = ")"
-	TokColon           = ":"
-	TokNot             = "!"
-	TokLet             = "let"
-	TokNewLine         = "LINEBREAK"
-	TokEOF             = "EOF"
-	TokIdent           = "IDENT"
-	TokIf              = "if"
-	TokElse            = "else"
-	TokTrue            = "true"
-	TokFalse           = "false"
-	TokInt             = "INT"
-	TokFloat           = "FLOAT"
-	TokEnd             = "END"
+	TokPlus     TokType = "+"
+	TokMinus            = "-"
+	TokSlash            = "/"
+	TokAster            = "*"
+	TokEq               = "=="
+	TokNotEq            = "!="
+	TokGt               = ">"
+	TokGTE              = ">="
+	TokLt               = "<"
+	TokLTE              = "<="
+	TokDot              = "."
+	TokComma            = ","
+	TokLBrac            = "["
+	TokRBrac            = "]"
+	TokAssign           = "="
+	TokAt               = "@"
+	TokLParen           = "("
+	TokRParen           = ")"
+	TokColon            = ":"
+	TokNot              = "!"
+	TokQuestion         = "?"
+	TokLet              = "let"
+	TokNewLine          = "LINEBREAK"
+	TokEOF              = "EOF"
+	TokIdent            = "IDENT"
+	TokIf               = "if"
+	TokElse             = "else"
+	TokTrue             = "true"
+	TokFalse            = "false"
+	TokInt              = "INT"
+	TokFloat            = "FLOAT"
+	TokEnd              = "END"
 )
 
 type ZTok struct {
@@ -70,6 +71,7 @@ var SingularTokOps = map[rune]TokType{
 	'\n': TokNewLine,
 	':':  TokColon,
 	'!':  TokNot,
+	'?':  TokQuestion,
 }
 
 var KeywordTok = map[string]TokType{
