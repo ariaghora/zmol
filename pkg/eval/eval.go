@@ -56,6 +56,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			return s.evalBooleanExpression(node)
 		case "&&", "||":
 			return s.evalLogicalExpression(node)
+		case "|>", "->", "-<":
+			return s.evalPipeExpression(node)
 		default:
 			left := s.EvalProgram(node.Left)
 			right := s.EvalProgram(node.Right)
@@ -154,6 +156,42 @@ func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue 
 		return left
 	}
 	return nil
+}
+
+func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
+	left := s.EvalProgram(node.Left)
+	if isErr(left) {
+		return left
+	}
+
+	// Check if right is a function
+	right := s.EvalProgram(node.Right)
+	if right.Type() != val.ZFUNCTION && right.Type() != val.ZNATIVE {
+		return val.ERROR("Right side of pipe must be a function")
+	}
+
+	switch node.Operator {
+	case "|>":
+		if right.Type() == val.ZNATIVE {
+			return right.(*val.ZNativeFunc).Fn(left)
+		}
+		// Take the left side and apply the function on the right side as the first argument
+		return s.applyFunction(right.(*val.ZFunction), []val.ZValue{left})
+	}
+	return nil
+}
+
+func (s *ZmolState) applyFunction(fn *val.ZFunction, args []val.ZValue) val.ZValue {
+	// Ensure the number of arguments is exactly one
+	if len(args) != 1 {
+		return val.ERROR("Function to apply must have exactly one argument")
+	}
+
+	zState := NewZmolState(fn.Env)
+	zState.Env.Set(fn.Params[0].Value, args[0])
+
+	evaluated := zState.EvalProgram(fn.Body)
+	return evaluated
 }
 
 func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue) val.ZValue {

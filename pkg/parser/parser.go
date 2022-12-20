@@ -11,16 +11,17 @@ import (
 const (
 	_ int = iota
 	PrecLowest
-	PrecAssign  // 2: =
-	PrecTernary // 2: ?:
-	PrecOr      // 3: ||
-	PrecAnd     // 4: &&
-	PrecEquals  // 8: ==
-	PrecGtLt    // 9: > or <
-	PrecAddSub  // 11: +
-	PrecProd    // 12: *
-	PrecPrefix  // 14: -X or !X
-	PrecCall    // 17: myFunction(X)
+	PrecAssign   // 2: =
+	PrecTernary  // 2: ?:
+	PrecPipeline // 2: |>
+	PrecOr       // 3: ||
+	PrecAnd      // 4: &&
+	PrecEquals   // 8: ==
+	PrecGtLt     // 9: > or <
+	PrecAddSub   // 11: +
+	PrecProd     // 12: *
+	PrecPrefix   // 14: -X or !X
+	PrecCall     // 17: myFunction(X)
 )
 
 var precedences = map[lexer.TokType]int{
@@ -37,6 +38,9 @@ var precedences = map[lexer.TokType]int{
 	// Logical operators
 	lexer.TokAnd: PrecAnd,
 	lexer.TokOr:  PrecOr,
+
+	// Pipeline operator
+	lexer.TokPipe: PrecPipeline,
 
 	// Arithmetic operators
 	lexer.TokPlus:   PrecAddSub,
@@ -106,6 +110,9 @@ func NewParser(l *lexer.ZLex) *Parser {
 	// Logical operators
 	p.registerInfix(lexer.TokAnd, p.parseInfixExpression)
 	p.registerInfix(lexer.TokOr, p.parseInfixExpression)
+
+	// Pipeline operator
+	p.registerInfix(lexer.TokPipe, p.parseInfixExpression)
 
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)

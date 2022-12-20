@@ -23,6 +23,7 @@ const (
 	TokGTE              = ">="
 	TokLt               = "<"
 	TokLTE              = "<="
+	TokPipe             = "|>"
 	TokDot              = "."
 	TokComma            = ","
 	TokLBrac            = "["
@@ -155,8 +156,12 @@ func (z *ZLex) Lex() error {
 				z.addTok(TokNotEq, 2)
 			} else if z.code[z.i] == '&' && z.i+1 < len(z.code) && z.code[z.i+1] == '&' {
 				z.addTok(TokAnd, 2)
-			} else if z.code[z.i] == '|' && z.i+1 < len(z.code) && z.code[z.i+1] == '|' {
-				z.addTok(TokOr, 2)
+			} else if z.code[z.i] == '|' && z.i+1 < len(z.code) {
+				if z.code[z.i+1] == '|' {
+					z.addTok(TokOr, 2)
+				} else if z.code[z.i+1] == '>' {
+					z.addTok(TokPipe, 2)
+				}
 			} else {
 				z.addTok(tokType, 1)
 			}
