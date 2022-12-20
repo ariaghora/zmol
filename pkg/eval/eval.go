@@ -51,6 +51,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		switch node.Operator {
 		case "=":
 			return s.evalVariableAssignment(node)
+		case "==", "!=", "<", ">", "<=", ">=":
+			return s.evalComparisonExpression(node)
 		default:
 			left := s.EvalProgram(node.Left)
 			right := s.EvalProgram(node.Right)
@@ -71,6 +73,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			Body:   body,
 			Env:    s.Env,
 		}
+	case *ast.TernaryExpression:
+		return s.evalTernaryExpression(node)
 	case *ast.CallExpression:
 		return s.evalCallExpression(node)
 	}
@@ -97,6 +101,27 @@ func (s *ZmolState) evalFloatLiteral(fl *ast.FloatLiteral) val.ZValue {
 
 func (s *ZmolState) evalBooleanLiteral(bl *ast.BooleanLiteral) val.ZValue {
 	return &val.ZBool{Value: bl.Value}
+}
+
+func (s *ZmolState) evalComparisonExpression(node *ast.InfixExpression) val.ZValue {
+	left := s.EvalProgram(node.Left)
+	right := s.EvalProgram(node.Right)
+
+	switch node.Operator {
+	case "==":
+		return &val.ZBool{Value: left.Equals(right)}
+	case "!=":
+		return &val.ZBool{Value: !left.Equals(right)}
+	// case "<":
+	// 	return &val.ZBool{Value: left.LessThan(right)}
+	// case ">":
+	// 	return &val.ZBool{Value: left.GreaterThan(right)}
+	case "<=":
+		return &val.ZBool{Value: left.LessThanEquals(right)}
+		// case ">=":
+		// 	return &val.ZBool{Value: left.GreaterThanEquals(right)}
+	}
+	return nil
 }
 
 func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -235,6 +260,17 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 	}
 	evaluated := zState.EvalProgram(function.(*val.ZFunction).Body)
 	return evaluated
+}
+
+func (s *ZmolState) evalTernaryExpression(node *ast.TernaryExpression) val.ZValue {
+	condition := s.EvalProgram(node.Condition)
+	if isErr(condition) {
+		return condition
+	}
+	if condition.(*val.ZBool).Value {
+		return s.EvalProgram(node.Consequence)
+	}
+	return s.EvalProgram(node.Alternative)
 }
 
 func isErr(obj val.ZValue) bool {
