@@ -161,8 +161,10 @@ func (s *ZmolState) evalIntegerInfixExpression(operator string, left, right val.
 		return &val.ZInt{Value: leftVal * rightVal}
 	case "/":
 		return &val.ZInt{Value: leftVal / rightVal}
+	case "%":
+		return &val.ZInt{Value: leftVal % rightVal}
 	}
-	return nil
+	return val.ERROR("Operator " + operator + " not supported for integers")
 }
 
 func (s *ZmolState) evalFloatInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -179,7 +181,7 @@ func (s *ZmolState) evalFloatInfixExpression(operator string, left, right val.ZV
 	case "/":
 		return &val.ZFloat{Value: leftVal / rightVal}
 	}
-	return nil
+	return val.ERROR("Operator " + operator + " not supported for floats")
 }
 
 func (s *ZmolState) evalIntFloatInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -196,7 +198,7 @@ func (s *ZmolState) evalIntFloatInfixExpression(operator string, left, right val
 	case "/":
 		return &val.ZFloat{Value: leftVal / rightVal}
 	}
-	return nil
+	return val.ERROR("Operator " + operator + " not supported for integers and floats")
 }
 
 func (s *ZmolState) evalFloatIntInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -213,7 +215,7 @@ func (s *ZmolState) evalFloatIntInfixExpression(operator string, left, right val
 	case "/":
 		return &val.ZFloat{Value: leftVal / rightVal}
 	}
-	return nil
+	return val.ERROR("Operator " + operator + " not supported for floats and integers")
 }
 
 func (s *ZmolState) evalIdentifier(node *ast.Identifier) val.ZValue {

@@ -12,6 +12,7 @@ const (
 	TokMinus            = "-"
 	TokSlash            = "/"
 	TokAster            = "*"
+	TokMod              = "%"
 	TokEq               = "=="
 	TokNotEq            = "!="
 	TokGt               = ">"
@@ -59,6 +60,7 @@ var SingularTokOps = map[rune]TokType{
 	'-':  TokMinus,
 	'*':  TokAster,
 	'/':  TokSlash,
+	'%':  TokMod,
 	'>':  TokGt,
 	'<':  TokLt,
 	'.':  TokDot,

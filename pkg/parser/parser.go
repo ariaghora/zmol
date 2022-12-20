@@ -37,6 +37,7 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokMinus:  PrecAddSub,
 	lexer.TokSlash:  PrecProd,
 	lexer.TokAster:  PrecProd,
+	lexer.TokMod:    PrecProd,
 	lexer.TokLParen: PrecCall,
 
 	// Ternary operator
@@ -86,6 +87,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
+	p.registerInfix(lexer.TokMod, p.parseInfixExpression)
 
 	p.registerInfix(lexer.TokEq, p.parseInfixExpression)
 	p.registerInfix(lexer.TokNotEq, p.parseInfixExpression)
