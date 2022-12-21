@@ -115,6 +115,18 @@ func (ll *ListLiteral) Str() string {
 	return out
 }
 
+type IndexExpression struct {
+	Token lexer.ZTok // the '[' token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode() {}
+func (ie *IndexExpression) Literal() string { return ie.Token.Text }
+func (ie *IndexExpression) Str() string {
+	return "(" + ie.Left.Str() + "[" + ie.Index.Str() + "])"
+}
+
 type InfixExpression struct {
 	Token    lexer.ZTok // the operator token, e.g. +
 	Left     Expression

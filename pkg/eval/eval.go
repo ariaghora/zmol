@@ -71,6 +71,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalBooleanLiteral(node)
 	case *ast.ListLiteral:
 		return s.evalListLiteral(node)
+	case *ast.IndexExpression:
+		return s.evalIndexExpression(node)
 	case *ast.FuncLiteral:
 		params := node.Parameters
 		body := node.Body
@@ -115,6 +117,30 @@ func (s *ZmolState) evalListLiteral(ll *ast.ListLiteral) val.ZValue {
 		elements = append(elements, s.EvalProgram(element))
 	}
 	return &val.ZList{Elements: elements}
+}
+
+func (s *ZmolState) evalIndexExpression(ie *ast.IndexExpression) val.ZValue {
+	left := s.EvalProgram(ie.Left)
+	index := s.EvalProgram(ie.Index)
+
+	switch {
+	case left.Type() == val.ZLIST && index.Type() == val.ZINT:
+		return s.evalListIndexExpression(left, index)
+	default:
+		return val.ERROR("index operator not supported: %s" + string(left.Type()))
+	}
+}
+
+func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) val.ZValue {
+	listVal := list.(*val.ZList)
+	indexVal := index.(*val.ZInt)
+	max := int64(len(listVal.Elements) - 1)
+
+	if indexVal.Value < 0 || indexVal.Value > max {
+		return val.ERROR("index out of range")
+	}
+
+	return listVal.Elements[indexVal.Value]
 }
 
 func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue {

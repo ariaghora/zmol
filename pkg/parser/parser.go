@@ -22,6 +22,7 @@ const (
 	PrecProd     // 12: *
 	PrecPrefix   // 14: -X or !X
 	PrecCall     // 17: myFunction(X)
+	PrecIndex    // 18: array[index]
 )
 
 var precedences = map[lexer.TokType]int{
@@ -50,6 +51,9 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokAster:  PrecProd,
 	lexer.TokMod:    PrecProd,
 	lexer.TokLParen: PrecCall,
+
+	// Index operator
+	lexer.TokLBrac: PrecIndex,
 
 	// Ternary operator
 	lexer.TokQuestion: PrecTernary,
@@ -99,6 +103,9 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokSlash, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
 	p.registerInfix(lexer.TokMod, p.parseInfixExpression)
+
+	// List access
+	p.registerInfix(lexer.TokLBrac, p.parseIndexExpression)
 
 	// Boolean operators
 	p.registerInfix(lexer.TokEq, p.parseInfixExpression)
@@ -438,6 +445,22 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	exp := p.parseExpression(PrecLowest)
 
 	if !p.expectPeek(lexer.TokRParen) {
+		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{
+		Token: p.curTok,
+		Left:  left,
+	}
+
+	p.nextToken()
+	exp.Index = p.parseExpression(PrecLowest)
+
+	if !p.expectPeek(lexer.TokRBrac) {
 		return nil
 	}
 
