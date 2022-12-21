@@ -33,7 +33,8 @@ const (
 	TokAt               = "@"
 	TokLParen           = "("
 	TokRParen           = ")"
-	TokColon            = ":"
+	TokLCurl            = "{"
+	TokRCurl            = "}"
 	TokNot              = "!"
 	TokQuestion         = "?"
 	TokLet              = "let"
@@ -41,6 +42,7 @@ const (
 	TokEOF              = "EOF"
 	TokIdent            = "IDENT"
 	TokIf               = "if"
+	TokElif             = "elif"
 	TokElse             = "else"
 	TokTrue             = "true"
 	TokFalse            = "false"
@@ -48,7 +50,6 @@ const (
 	TokAs               = "as"
 	TokInt              = "INT"
 	TokFloat            = "FLOAT"
-	TokEnd              = "END"
 )
 
 type ZTok struct {
@@ -81,18 +82,20 @@ var SingularTokOps = map[rune]TokType{
 	'(':  TokLParen,
 	')':  TokRParen,
 	'\n': TokNewLine,
-	':':  TokColon,
+	':':  TokLCurl,
 	'!':  TokNot,
 	'?':  TokQuestion,
+	'{':  TokLCurl,
+	'}':  TokRCurl,
 }
 
 var KeywordTok = map[string]TokType{
 	"let":   TokLet,
 	"if":    TokIf,
+	"elif":  TokElif,
 	"else":  TokElse,
 	"true":  TokTrue,
 	"false": TokFalse,
-	"end":   TokEnd,
 	"iter":  TokIter,
 	"as":    TokAs,
 }

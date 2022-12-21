@@ -162,8 +162,37 @@ func TestTernarySymbols(t *testing.T) {
 		{Type: TokIdent, Text: "a"},
 		{Type: TokQuestion, Text: "?"},
 		{Type: TokIdent, Text: "b"},
-		{Type: TokColon, Text: ":"},
+		{Type: TokLCurl, Text: ":"},
 		{Type: TokIdent, Text: "c"},
+		{Type: TokEOF, Text: ""},
+	}
+
+	for i, tok := range lexer.Tokens {
+		if tok != expectedTokens[i] {
+			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
+		}
+	}
+}
+
+func TestCurlyBraces(t *testing.T) {
+	source := `{ a = 5 }`
+
+	lexer := NewLexer(source)
+	err := lexer.Lex()
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if len(lexer.Tokens) != 6 {
+		t.Errorf("Expected 6 tokens, got %d", len(lexer.Tokens))
+	}
+
+	expectedTokens := []ZTok{
+		{Type: TokLCurl, Text: "{"},
+		{Type: TokIdent, Text: "a"},
+		{Type: TokAssign, Text: "="},
+		{Type: TokInt, Text: "5"},
+		{Type: TokRCurl, Text: "}"},
 		{Type: TokEOF, Text: ""},
 	}
 

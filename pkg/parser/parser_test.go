@@ -339,10 +339,10 @@ func TestParseFuncLiteral(t *testing.T) {
 }
 
 func TestParseFuncLiteralMultiline(t *testing.T) {
-	source := `@(x, y):
+	source := `@(x, y) {
 		let z = x + y
 		z * 2
-	end`
+	}`
 
 	l := lexer.NewLexer(source)
 	err := l.Lex()
@@ -426,9 +426,9 @@ func TestParseFuncLiteralMultiline(t *testing.T) {
 
 func TestMultipleStatements(t *testing.T) {
 	source := `
-	let f = @(x, y):
+	let f = @(x, y) {
 		x + y
-	end
+	}
 
 	let g = 100
 	`
