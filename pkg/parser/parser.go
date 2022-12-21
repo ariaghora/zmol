@@ -13,7 +13,7 @@ const (
 	PrecLowest
 	PrecAssign   // 2: =
 	PrecTernary  // 2: ?:
-	PrecPipeline // 2: |>
+	PrecPipeline // 2: |> >-
 	PrecOr       // 3: ||
 	PrecAnd      // 4: &&
 	PrecEquals   // 8: ==
@@ -40,7 +40,8 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokOr:  PrecOr,
 
 	// Pipeline operator
-	lexer.TokPipe: PrecPipeline,
+	lexer.TokPipe:   PrecPipeline,
+	lexer.TokFilter: PrecPipeline,
 
 	// Arithmetic operators
 	lexer.TokPlus:   PrecAddSub,
@@ -113,6 +114,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 
 	// Pipeline operator
 	p.registerInfix(lexer.TokPipe, p.parseInfixExpression)
+	p.registerInfix(lexer.TokFilter, p.parseInfixExpression)
 
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)

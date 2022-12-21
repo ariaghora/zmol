@@ -24,6 +24,7 @@ const (
 	TokLt               = "<"
 	TokLTE              = "<="
 	TokPipe             = "|>"
+	TokFilter           = ">-"
 	TokDot              = "."
 	TokComma            = ","
 	TokLBrac            = "["
@@ -148,6 +149,8 @@ func (z *ZLex) Lex() error {
 		} else if tokType, ok := SingularTokOps[rune(z.code[z.i])]; ok {
 			if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokGTE, 2)
+			} else if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '-' {
+				z.addTok(TokFilter, 2)
 			} else if z.code[z.i] == '<' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokLTE, 2)
 			} else if z.code[z.i] == '=' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
@@ -176,15 +179,6 @@ func (z *ZLex) Lex() error {
 	z.Tokens = append(z.Tokens, ZTok{Type: TokEOF})
 	return nil
 }
-
-// func (z *ZLex) NextToken() ZTok {
-// 	if len(z.tokens) == 0 {
-// 		z.Lex()
-// 	}
-// 	tok := z.tokens[0]
-// 	z.tokens = z.tokens[1:]
-// 	return tok
-// }
 
 func NewLexer(code string) *ZLex {
 	return &ZLex{code: code}

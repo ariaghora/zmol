@@ -56,7 +56,7 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			return s.evalBooleanExpression(node)
 		case "&&", "||":
 			return s.evalLogicalExpression(node)
-		case "|>", "->", "-<":
+		case "|>", "->", ">-":
 			return s.evalPipeExpression(node)
 		default:
 			left := s.EvalProgram(node.Left)
@@ -175,8 +175,9 @@ func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
 		if right.Type() == val.ZNATIVE {
 			return right.(*val.ZNativeFunc).Fn(left)
 		}
-		// Take the left side and apply the function on the right side as the first argument
 		return s.applyFunction(right.(*val.ZFunction), []val.ZValue{left})
+	case ">-":
+		return s.filterList(left, right)
 	}
 	return nil
 }
@@ -347,6 +348,32 @@ func (s *ZmolState) evalTernaryExpression(node *ast.TernaryExpression) val.ZValu
 		return s.EvalProgram(node.Consequence)
 	}
 	return s.EvalProgram(node.Alternative)
+}
+
+func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
+	if isErr(list) {
+		return list
+	}
+	var result []val.ZValue
+	for _, item := range list.(*val.ZList).Elements {
+		switch fn.Type() {
+		case val.ZNATIVE:
+			if fn.(*val.ZNativeFunc).Fn(item).(*val.ZBool).Value {
+				result = append(result, item)
+			}
+		case val.ZFUNCTION:
+			zState := NewZmolState(s.Env)
+			zState.Env.Set(fn.(*val.ZFunction).Params[0].Value, item)
+			evaluated := zState.EvalProgram(fn.(*val.ZFunction).Body)
+			if isErr(evaluated) {
+				return evaluated
+			}
+			if evaluated.(*val.ZBool).Value {
+				result = append(result, item)
+			}
+		}
+	}
+	return &val.ZList{Elements: result}
 }
 
 func isErr(obj val.ZValue) bool {
