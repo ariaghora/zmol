@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ariaghora/zmol/pkg/ast"
 	"github.com/ariaghora/zmol/pkg/lexer"
@@ -83,6 +84,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		}
 	case *ast.TernaryExpression:
 		return s.evalTernaryExpression(node)
+	case *ast.IterStatement:
+		return s.evalIterStatement(node)
 	case *ast.CallExpression:
 		return s.evalCallExpression(node)
 	}
@@ -376,6 +379,28 @@ func (s *ZmolState) evalTernaryExpression(node *ast.TernaryExpression) val.ZValu
 	return s.EvalProgram(node.Alternative)
 }
 
+func (s *ZmolState) evalIterStatement(node *ast.IterStatement) val.ZValue {
+	list := s.EvalProgram(node.List)
+
+	if isErr(list) {
+		return list
+	}
+
+	// check if it is a list
+	if list.Type() != val.ZLIST {
+		fmt.Println("Iter statement requires a list")
+		os.Exit(1)
+	}
+
+	ident := node.Ident.Value
+
+	for _, item := range list.(*val.ZList).Elements {
+		s.Env.Set(ident, item)
+		s.EvalProgram(node.Body)
+	}
+
+	return &val.ZNull{}
+}
 func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
 	if isErr(list) {
 		return list

@@ -44,6 +44,8 @@ const (
 	TokElse             = "else"
 	TokTrue             = "true"
 	TokFalse            = "false"
+	TokIter             = "iter"
+	TokAs               = "as"
 	TokInt              = "INT"
 	TokFloat            = "FLOAT"
 	TokEnd              = "END"
@@ -91,6 +93,8 @@ var KeywordTok = map[string]TokType{
 	"true":  TokTrue,
 	"false": TokFalse,
 	"end":   TokEnd,
+	"iter":  TokIter,
+	"as":    TokAs,
 }
 
 func (z *ZLex) addIdent() {

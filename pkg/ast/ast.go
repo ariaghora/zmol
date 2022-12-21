@@ -211,3 +211,16 @@ func (te *TernaryExpression) Literal() string { return te.Token.Text }
 func (te *TernaryExpression) Str() string {
 	return te.Condition.Str() + "?" + te.Consequence.Str() + ":" + te.Alternative.Str()
 }
+
+type IterStatement struct {
+	Token lexer.ZTok // the 'iter' token
+	List  Expression
+	Body  *BlockStatement
+	Ident *Identifier
+}
+
+func (is *IterStatement) statementNode()  {}
+func (is *IterStatement) Literal() string { return is.Token.Text }
+func (is *IterStatement) Str() string {
+	return is.Token.Text + " " + is.List.Str() + " " + is.Body.Str()
+}

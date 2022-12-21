@@ -7,6 +7,10 @@ type ZInt struct {
 	Value int64
 }
 
+func INT(value int64) *ZInt {
+	return &ZInt{Value: value}
+}
+
 func (z *ZInt) Type() ZValueType { return ZINT }
 func (z *ZInt) Str() string {
 	return fmt.Sprintf("%d", z.Value)
@@ -41,6 +45,10 @@ func (z *ZInt) GreaterThanEquals(other ZValue) ZValue {
 // Float type
 type ZFloat struct {
 	Value float64
+}
+
+func FLOAT(value float64) *ZFloat {
+	return &ZFloat{Value: value}
 }
 
 func (z *ZFloat) Type() ZValueType { return ZFLOAT }

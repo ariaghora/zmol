@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/ast"
@@ -158,6 +160,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curTok.Type {
 	case lexer.TokLet:
 		return p.parseVarAssign()
+	case lexer.TokIter:
+		return p.parseIter()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -183,6 +187,41 @@ func (p *Parser) parseVarAssign() *ast.VarrAssignmentStatement {
 	if p.peekTok.Type == lexer.TokNewLine {
 		p.nextToken()
 	}
+
+	return statement
+}
+
+func (p *Parser) parseIter() *ast.IterStatement {
+	// Iterate over a list
+	statement := &ast.IterStatement{Token: p.curTok}
+
+	p.nextToken()
+
+	list := p.parseExpression(PrecLowest)
+
+	if !p.expectPeek(lexer.TokAs) {
+		return nil
+	}
+
+	// Get the identifier
+	p.nextToken()
+
+	if p.curTok.Type != lexer.TokIdent {
+		return nil
+	}
+
+	statement.Ident = &ast.Identifier{Token: p.curTok, Value: p.curTok.Text}
+
+	if !p.expectPeek(lexer.TokColon) {
+		return nil
+	}
+
+	p.nextToken()
+
+	body := p.parseBlockStatement()
+
+	statement.List = list
+	statement.Body = body
 
 	return statement
 }
@@ -381,6 +420,13 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 			block.Statements = append(block.Statements, stmt)
 		}
 		p.nextToken()
+	}
+
+	if p.curTok.Type == lexer.TokEOF {
+		msg := "Unexpected end of file while parsing block statement"
+		p.errors = append(p.errors, msg)
+		fmt.Println(msg)
+		os.Exit(1)
 	}
 
 	return block
