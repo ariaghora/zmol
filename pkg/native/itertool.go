@@ -73,3 +73,37 @@ func Z_reduce(args ...val.ZValue) val.ZValue {
 
 	return element
 }
+
+func Z_append(args ...val.ZValue) val.ZValue {
+	if len(args) != 2 {
+		return &val.ZError{Message: "append takes 2 arguments"}
+	}
+	list := args[0]
+	element := args[1]
+	if list.Type() != val.ZLIST {
+		return &val.ZError{Message: "append takes a list as first argument"}
+	}
+
+	list.(*val.ZList).Elements = append(list.(*val.ZList).Elements, element)
+	return list
+}
+
+func Z_reverse(args ...val.ZValue) val.ZValue {
+	if len(args) != 1 {
+		return &val.ZError{Message: "reverse takes 1 argument"}
+	}
+	list := args[0]
+	if list.Type() != val.ZLIST {
+		return &val.ZError{Message: "reverse takes a list"}
+	}
+
+	element := []val.ZValue{}
+	for i := len(list.(*val.ZList).Elements) - 1; i >= 0; i-- {
+		element = append(element, list.(*val.ZList).Elements[i])
+	}
+
+	list = &val.ZList{
+		Elements: element,
+	}
+	return list
+}

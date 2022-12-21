@@ -47,6 +47,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.Env.Set(node.Name.Value, val)
 	case *ast.BlockStatement:
 		return s.evalBlockStatement(node)
+	case *ast.IfStatement:
+		return s.evalIfStatement(node)
 	case *ast.ExpressionStatement:
 		return s.EvalProgram(node.Expression)
 	case *ast.InfixExpression:
@@ -153,8 +155,8 @@ func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue 
 	switch node.Operator {
 	case "==":
 		return left.Equals(right)
-	// case "!=":
-	// 	return &val.ZBool{Value: !left.Equals(right)
+	case "!=":
+		return left.NotEquals(right)
 	// case "<":
 	// 	return &val.ZBool{Value: left.LessThan(right)}
 	// case ">":
@@ -234,6 +236,9 @@ func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue)
 		return s.evalIntFloatInfixExpression(operator, left, right)
 	case left.Type() == val.ZFLOAT && right.Type() == val.ZINT:
 		return s.evalFloatIntInfixExpression(operator, left, right)
+
+	case left.Type() == val.ZLIST && right.Type() == val.ZLIST:
+		return s.evalListConcatExpression(left, right)
 	}
 	return nil
 }
@@ -332,6 +337,30 @@ func (s *ZmolState) evalBlockStatement(block *ast.BlockStatement) val.ZValue {
 	return result
 }
 
+func (s *ZmolState) evalIfStatement(node *ast.IfStatement) val.ZValue {
+	condition := s.EvalProgram(node.Condition)
+	if isErr(condition) {
+		return condition
+	}
+	if isTruthy(condition) {
+		return s.EvalProgram(node.Consequence)
+	} else if node.Alternative != nil {
+		return s.EvalProgram(node.Alternative)
+	}
+	return nil
+}
+
+func isTruthy(value val.ZValue) bool {
+	switch value.Type() {
+	case val.ZNULL:
+		return false
+	case val.ZBOOL:
+		return value.(*val.ZBool).Value
+	default:
+		return true
+	}
+}
+
 func (s *ZmolState) evalExpressions(exps []ast.Expression) []val.ZValue {
 	var result []val.ZValue
 
@@ -425,6 +454,23 @@ func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
 		}
 	}
 	return &val.ZList{Elements: result}
+}
+
+func (s *ZmolState) evalListConcatExpression(left, right val.ZValue) val.ZValue {
+	if isErr(left) {
+		return left
+	}
+	if isErr(right) {
+		return right
+	}
+
+	// check if both are lists
+	if left.Type() != val.ZLIST || right.Type() != val.ZLIST {
+		fmt.Println("Concatenation requires two lists")
+		os.Exit(1)
+	}
+
+	return &val.ZList{Elements: append(left.(*val.ZList).Elements, right.(*val.ZList).Elements...)}
 }
 
 func isErr(obj val.ZValue) bool {

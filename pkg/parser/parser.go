@@ -160,6 +160,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curTok.Type {
 	case lexer.TokLet:
 		return p.parseVarAssign()
+	case lexer.TokIf:
+		return p.parseIfStatement()
 	case lexer.TokIter:
 		return p.parseIter()
 	default:
@@ -186,6 +188,39 @@ func (p *Parser) parseVarAssign() *ast.VarrAssignmentStatement {
 
 	if p.peekTok.Type == lexer.TokNewLine {
 		p.nextToken()
+	}
+
+	return statement
+}
+
+func (p *Parser) parseIfStatement() *ast.IfStatement {
+	statement := &ast.IfStatement{Token: p.curTok}
+
+	p.nextToken()
+
+	statement.Condition = p.parseExpression(PrecLowest)
+
+	if !p.expectPeek(lexer.TokColon) {
+		return nil
+	}
+
+	statement.Consequence = p.parseBlockStatement([]lexer.TokType{lexer.TokElse, lexer.TokEnd})
+
+	if p.peekTok.Type == lexer.TokElse {
+		p.nextToken()
+
+		if p.peekTok.Type == lexer.TokIf {
+			p.nextToken()
+			statement.Alternative = p.parseIfStatement()
+		} else if p.peekTok.Type == lexer.TokColon {
+			p.nextToken()
+			statement.Alternative = p.parseBlockStatement([]lexer.TokType{lexer.TokEnd})
+		} else {
+			fmt.Println("Expected : or if after else")
+			os.Exit(1)
+		}
+
+		// statement.Alternative = p.parseBlockStatement()
 	}
 
 	return statement
@@ -218,7 +253,7 @@ func (p *Parser) parseIter() *ast.IterStatement {
 
 	p.nextToken()
 
-	body := p.parseBlockStatement()
+	body := p.parseBlockStatement([]lexer.TokType{lexer.TokEnd})
 
 	statement.List = list
 	statement.Body = body
@@ -365,14 +400,11 @@ func (p *Parser) parseFuncLiteral() ast.Expression {
 		return nil
 	}
 
-	// if p.expectPeek(lexer.TokNewLine) {
 	if p.peekTok.Type == lexer.TokNewLine {
 		p.skipLinebreak()
-		// lit.Multiline = true
-		lit.Body = p.parseBlockStatement()
+		lit.Body = p.parseBlockStatement([]lexer.TokType{lexer.TokEnd})
 	} else {
 		p.nextToken()
-		// lit.Multiline = false
 		stmt := p.parseExpressionStatement()
 		lit.Body = &ast.BlockStatement{Token: p.curTok, Statements: []ast.Statement{stmt}}
 	}
@@ -407,13 +439,22 @@ func (p *Parser) parseFuncParameters() []*ast.Identifier {
 	return identifiers
 }
 
-func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+func tokenTypeIsOneOf(tok lexer.TokType, types []lexer.TokType) bool {
+	for _, t := range types {
+		if tok == t {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Parser) parseBlockStatement(blockEndAlts []lexer.TokType) *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: p.curTok}
 	block.Statements = []ast.Statement{}
 
 	p.nextToken()
 
-	for !(p.curTok.Type == lexer.TokEnd || p.curTok.Type == lexer.TokEOF) {
+	for !(tokenTypeIsOneOf(p.curTok.Type, blockEndAlts) || p.curTok.Type == lexer.TokEOF) {
 		p.skipLinebreak()
 		stmt := p.parseStatement()
 		if stmt != nil {

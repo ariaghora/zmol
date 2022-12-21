@@ -7,6 +7,9 @@ func (z *ZNull) Str() string      { return "" }
 func (z *ZNull) Equals(other ZValue) ZValue {
 	return BOOL(other.Type() == ZNULL)
 }
+func (z *ZNull) NotEquals(other ZValue) ZValue {
+	return BOOL(other.Type() != ZNULL)
+}
 func (z *ZNull) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for null")
 }

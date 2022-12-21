@@ -37,6 +37,7 @@ type ZValue interface {
 	Type() ZValueType
 	Str() string
 	Equals(other ZValue) ZValue
+	NotEquals(other ZValue) ZValue
 	LessThanEquals(other ZValue) ZValue
 	GreaterThanEquals(other ZValue) ZValue
 }

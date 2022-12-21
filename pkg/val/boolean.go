@@ -22,6 +22,12 @@ func (z *ZBool) Equals(other ZValue) ZValue {
 	}
 	return BOOL(z.Value == other.(*ZBool).Value)
 }
+func (z *ZBool) NotEquals(other ZValue) ZValue {
+	if other.Type() != ZBOOL {
+		return ERROR("Cannot compare bool with " + string(other.Type()))
+	}
+	return BOOL(z.Value != other.(*ZBool).Value)
+}
 func (z *ZBool) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for bool")
 }

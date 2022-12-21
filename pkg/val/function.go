@@ -16,6 +16,9 @@ func (z *ZFunction) Str() string      { return "Function" }
 func (z *ZFunction) Equals(other ZValue) ZValue {
 	return ERROR("Operator '==' not defined for functions")
 }
+func (z *ZFunction) NotEquals(other ZValue) ZValue {
+	return ERROR("Operator '!=' not defined for functions")
+}
 func (z *ZFunction) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for functions")
 }
@@ -32,6 +35,9 @@ func (z *ZNativeFunc) Type() ZValueType { return ZNATIVE }
 func (z *ZNativeFunc) Str() string      { return "NativeFunction" }
 func (z *ZNativeFunc) Equals(other ZValue) ZValue {
 	return ERROR("Operator '==' not defined for functions")
+}
+func (z *ZNativeFunc) NotEquals(other ZValue) ZValue {
+	return ERROR("Operator '!=' not defined for functions")
 }
 func (z *ZNativeFunc) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for functions")

@@ -13,6 +13,12 @@ func (z *ZString) Equals(other ZValue) ZValue {
 	}
 	return BOOL(z.Value == other.(*ZString).Value)
 }
+func (z *ZString) NotEquals(other ZValue) ZValue {
+	if other.Type() != ZSTRING {
+		return BOOL(true)
+	}
+	return BOOL(z.Value != other.(*ZString).Value)
+}
 func (z *ZString) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for string")
 }

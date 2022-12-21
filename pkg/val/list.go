@@ -28,6 +28,10 @@ func (zl *ZList) Equals(other ZValue) ZValue {
 	return ERROR("Operator '==' not defined for list")
 }
 
+func (zl *ZList) NotEquals(other ZValue) ZValue {
+	return ERROR("Operator '!=' not defined for list")
+}
+
 func (zl *ZList) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for list")
 }

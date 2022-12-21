@@ -199,6 +199,23 @@ func (ce *CallExpression) Str() string {
 	return ce.Function.Str() + "(" + args + ")"
 }
 
+type IfStatement struct {
+	Token       lexer.ZTok // the 'if' token
+	Condition   Expression
+	Consequence Statement
+	Alternative Statement
+}
+
+func (is *IfStatement) statementNode()  {}
+func (is *IfStatement) Literal() string { return is.Token.Text }
+func (is *IfStatement) Str() string {
+	out := "if " + is.Condition.Str() + " " + is.Consequence.Str()
+	if is.Alternative != nil {
+		out += "else " + is.Alternative.Str()
+	}
+	return out
+}
+
 type TernaryExpression struct {
 	Token       lexer.ZTok // the '?' token
 	Condition   Expression

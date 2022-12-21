@@ -9,6 +9,7 @@ import (
 )
 
 func RegisterNativeFunc(zState *eval.ZmolState) {
+	// IO
 	zState.Env.Set("print", &val.ZNativeFunc{Fn: Z_print})
 	zState.Env.Set("println", &val.ZNativeFunc{Fn: Z_println})
 	zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
@@ -16,6 +17,8 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 	// itertools
 	zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
 	zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
+	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
+	zState.Env.Set("reverse", &val.ZNativeFunc{Fn: Z_reverse})
 
 	// math
 	zState.Env.Set("sqrt", &val.ZNativeFunc{Fn: Z_sqrt})
