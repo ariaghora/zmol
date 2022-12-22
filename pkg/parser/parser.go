@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/ast"
@@ -143,10 +142,6 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 
 	for p.curTok.Type != lexer.TokEOF {
-		if p.curTok.Type == lexer.TokNewLine {
-			p.nextToken()
-			continue
-		}
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -186,7 +181,7 @@ func (p *Parser) parseVarAssign() *ast.VarrAssignmentStatement {
 
 	statement.Value = p.parseExpression(PrecLowest)
 
-	if p.peekTok.Type == lexer.TokNewLine {
+	if p.peekTok.Type == lexer.TokSemicolon {
 		p.nextToken()
 	}
 
@@ -212,12 +207,9 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 	if p.curTok.Type == lexer.TokElif {
 		statement.Alternative = p.parseIfStatement()
 	} else if p.curTok.Type == lexer.TokElse {
-
 		if !p.expectPeek(lexer.TokLCurl) {
 			return nil
 		}
-
-		p.nextToken()
 
 		statement.Alternative = p.parseBlockStatement()
 	}
@@ -264,7 +256,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(PrecLowest)
 
-	if p.peekTok.Type == lexer.TokNewLine {
+	if p.peekTok.Type == lexer.TokSemicolon {
 		p.nextToken()
 	}
 
@@ -274,11 +266,12 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseExpression(prec int) ast.Expression {
 	prefix := p.prefixParseFns[p.curTok.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(p.curTok.Type)
 		return nil
 	}
 	leftExp := prefix()
 
-	for !(p.peekTok.Type == lexer.TokNewLine || p.peekTok.Type == lexer.TokEOF) && prec < p.peekPrec() {
+	for !(p.peekTok.Type == lexer.TokSemicolon || p.peekTok.Type == lexer.TokEOF) && prec < p.peekPrec() {
 		infix := p.infixParseFns[p.peekTok.Type]
 		if infix == nil {
 			return leftExp
@@ -290,6 +283,11 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 	}
 
 	return leftExp
+}
+
+func (p *Parser) noPrefixParseFnError(t lexer.TokType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
@@ -398,14 +396,7 @@ func (p *Parser) parseFuncLiteral() ast.Expression {
 		return nil
 	}
 
-	if p.peekTok.Type == lexer.TokNewLine {
-		p.skipLinebreak()
-		lit.Body = p.parseBlockStatement()
-	} else {
-		p.nextToken()
-		stmt := p.parseExpressionStatement()
-		lit.Body = &ast.BlockStatement{Token: p.curTok, Statements: []ast.Statement{stmt}}
-	}
+	lit.Body = p.parseBlockStatement()
 
 	return lit
 }
@@ -437,15 +428,6 @@ func (p *Parser) parseFuncParameters() []*ast.Identifier {
 	return identifiers
 }
 
-func tokenTypeIsOneOf(tok lexer.TokType, types []lexer.TokType) bool {
-	for _, t := range types {
-		if tok == t {
-			return true
-		}
-	}
-	return false
-}
-
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: p.curTok}
 	block.Statements = []ast.Statement{}
@@ -453,7 +435,6 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	p.nextToken()
 
 	for !(p.curTok.Type == lexer.TokRCurl || p.curTok.Type == lexer.TokEOF) {
-		p.skipLinebreak()
 		stmt := p.parseStatement()
 		if stmt != nil {
 			block.Statements = append(block.Statements, stmt)
@@ -461,12 +442,6 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		p.nextToken()
 	}
 
-	if p.curTok.Type == lexer.TokEOF {
-		msg := "Unexpected end of file while parsing block statement"
-		p.errors = append(p.errors, msg)
-		fmt.Println(msg)
-		os.Exit(1)
-	}
 	return block
 }
 
@@ -489,7 +464,7 @@ func (p *Parser) parserTernaryExpression(condition ast.Expression) ast.Expressio
 	p.nextToken()
 	exp.Consequence = p.parseExpression(PrecLowest)
 
-	if !p.expectPeek(lexer.TokLCurl) {
+	if !p.expectPeek(lexer.TokColon) {
 		return nil
 	}
 
@@ -553,7 +528,7 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) peekError(t lexer.TokType) {
 	msg := "Expected next token to be %s, got %s instead"
-	p.errors = append(p.errors, msg)
+	p.errors = append(p.errors, fmt.Sprintf(msg, t, p.peekTok.Type))
 }
 
 func (p *Parser) expectPeek(t lexer.TokType) bool {
@@ -588,12 +563,6 @@ func (p *Parser) peekPrec() int {
 	}
 
 	return PrecLowest
-}
-
-func (p *Parser) skipLinebreak() {
-	for p.peekTok.Type == lexer.TokNewLine {
-		p.nextToken()
-	}
 }
 
 func (p *Parser) Errors() []string {

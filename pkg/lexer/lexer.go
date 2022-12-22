@@ -8,48 +8,49 @@ import (
 type TokType string
 
 const (
-	TokPlus     TokType = "+"
-	TokMinus            = "-"
-	TokSlash            = "/"
-	TokAster            = "*"
-	TokMod              = "%"
-	TokAnd              = "&&"
-	TokOr               = "||"
-	TokBitAnd           = "&"
-	TokBitOr            = "|"
-	TokEq               = "=="
-	TokNotEq            = "!="
-	TokGt               = ">"
-	TokGTE              = ">="
-	TokLt               = "<"
-	TokLTE              = "<="
-	TokPipe             = "|>"
-	TokFilter           = ">-"
-	TokDot              = "."
-	TokComma            = ","
-	TokLBrac            = "["
-	TokRBrac            = "]"
-	TokAssign           = "="
-	TokAt               = "@"
-	TokLParen           = "("
-	TokRParen           = ")"
-	TokLCurl            = "{"
-	TokRCurl            = "}"
-	TokNot              = "!"
-	TokQuestion         = "?"
-	TokLet              = "let"
-	TokNewLine          = "LINEBREAK"
-	TokEOF              = "EOF"
-	TokIdent            = "IDENT"
-	TokIf               = "if"
-	TokElif             = "elif"
-	TokElse             = "else"
-	TokTrue             = "true"
-	TokFalse            = "false"
-	TokIter             = "iter"
-	TokAs               = "as"
-	TokInt              = "INT"
-	TokFloat            = "FLOAT"
+	TokPlus      TokType = "+"
+	TokMinus             = "-"
+	TokSlash             = "/"
+	TokAster             = "*"
+	TokMod               = "%"
+	TokAnd               = "&&"
+	TokOr                = "||"
+	TokBitAnd            = "&"
+	TokBitOr             = "|"
+	TokEq                = "=="
+	TokNotEq             = "!="
+	TokGt                = ">"
+	TokGTE               = ">="
+	TokLt                = "<"
+	TokLTE               = "<="
+	TokPipe              = "|>"
+	TokFilter            = ">-"
+	TokDot               = "."
+	TokComma             = ","
+	TokLBrac             = "["
+	TokRBrac             = "]"
+	TokAssign            = "="
+	TokAt                = "@"
+	TokLParen            = "("
+	TokRParen            = ")"
+	TokLCurl             = "{"
+	TokRCurl             = "}"
+	TokSemicolon         = ";"
+	TokColon             = ":"
+	TokNot               = "!"
+	TokQuestion          = "?"
+	TokLet               = "let"
+	TokEOF               = "EOF"
+	TokIdent             = "IDENT"
+	TokIf                = "if"
+	TokElif              = "elif"
+	TokElse              = "else"
+	TokTrue              = "true"
+	TokFalse             = "false"
+	TokIter              = "iter"
+	TokAs                = "as"
+	TokInt               = "INT"
+	TokFloat             = "FLOAT"
 )
 
 type ZTok struct {
@@ -64,29 +65,29 @@ type ZLex struct {
 }
 
 var SingularTokOps = map[rune]TokType{
-	'@':  TokAt,
-	'+':  TokPlus,
-	'-':  TokMinus,
-	'*':  TokAster,
-	'/':  TokSlash,
-	'%':  TokMod,
-	'&':  TokBitAnd,
-	'|':  TokBitOr,
-	'>':  TokGt,
-	'<':  TokLt,
-	'.':  TokDot,
-	',':  TokComma,
-	'[':  TokLBrac,
-	']':  TokRBrac,
-	'=':  TokAssign,
-	'(':  TokLParen,
-	')':  TokRParen,
-	'\n': TokNewLine,
-	':':  TokLCurl,
-	'!':  TokNot,
-	'?':  TokQuestion,
-	'{':  TokLCurl,
-	'}':  TokRCurl,
+	'@': TokAt,
+	'+': TokPlus,
+	'-': TokMinus,
+	'*': TokAster,
+	'/': TokSlash,
+	'%': TokMod,
+	'&': TokBitAnd,
+	'|': TokBitOr,
+	'>': TokGt,
+	'<': TokLt,
+	'.': TokDot,
+	',': TokComma,
+	'[': TokLBrac,
+	']': TokRBrac,
+	'=': TokAssign,
+	'(': TokLParen,
+	')': TokRParen,
+	'!': TokNot,
+	'?': TokQuestion,
+	'{': TokLCurl,
+	'}': TokRCurl,
+	';': TokSemicolon,
+	':': TokColon,
 }
 
 var KeywordTok = map[string]TokType{
@@ -151,7 +152,7 @@ func (z *ZLex) skipWhitespace() {
 
 func (z *ZLex) Lex() error {
 	for z.i < len(z.code) {
-		if unicode.IsSpace(rune(z.code[z.i])) && z.code[z.i] != '\n' {
+		if unicode.IsSpace(rune(z.code[z.i])) {
 			z.skipWhitespace()
 		} else if tokType, ok := SingularTokOps[rune(z.code[z.i])]; ok {
 			if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {

@@ -23,7 +23,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 }
 
 func TestFunctionValue(t *testing.T) {
-	input := "@(x): x + 2 "
+	input := "@(x){ x + 2 }"
 	evaluated := testEval(input)
 	fn, ok := evaluated.(*val.ZFunction)
 	if !ok {
@@ -48,9 +48,9 @@ func TestAnonFunctionCalls(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"(@(x): x + 2)(2)", 4},
-		{"(@(x): x + 2)(3)", 5},
-		{"(@(x): x + x)(4)", 8},
+		{"@(x){ x + 2 }(2)", 4},
+		{"@(x){ x + 2 }(3)", 5},
+		{"@(x){ x + x }(4)", 8},
 	}
 
 	for _, tt := range tests {
@@ -61,7 +61,7 @@ func TestAnonFunctionCalls(t *testing.T) {
 
 func TestFunctionCalls(t *testing.T) {
 	source := `
-	add_five = @(x): x + 5
+	add_five = @(x){ x + 5 }
 	add_five(5)
 	`
 
@@ -70,7 +70,7 @@ func TestFunctionCalls(t *testing.T) {
 
 	sourceWithGlobal := `
 	val = 5
-	add_five = @(x): x + val
+	add_five = @(x){ x + val }
 	add_five(5)
 	`
 

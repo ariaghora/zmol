@@ -279,7 +279,7 @@ func TestBoolInfix(t *testing.T) {
 }
 
 func TestParseFuncLiteral(t *testing.T) {
-	source := "@(x, y): x + y"
+	source := "@(x, y) { x + y }"
 	l := lexer.NewLexer(source)
 	err := l.Lex()
 	if err != nil {
@@ -476,10 +476,6 @@ func TestMultipleStatements(t *testing.T) {
 		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
 	}
 
-	letStmt := program.Statements[1].(*ast.VarrAssignmentStatement)
-	if letStmt.Name.Value != "g" {
-		t.Errorf("Expected name to be 'g', got %s", letStmt.Name.Value)
-	}
 }
 
 func TestParseFunctionCall(t *testing.T) {

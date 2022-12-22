@@ -117,19 +117,17 @@ func TestSimpleScript(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(lexer.Tokens) != 14 {
-		t.Errorf("Expected 14 tokens, got %d", len(lexer.Tokens))
+	if len(lexer.Tokens) != 12 {
+		t.Errorf("Expected 12 tokens, got %d", len(lexer.Tokens))
 	}
 
 	expectedTokens := []ZTok{
 		{Type: TokIdent, Text: "number1"},
 		{Type: TokAssign, Text: "="},
 		{Type: TokInt, Text: "5"},
-		{Type: TokNewLine, Text: "\n"},
 		{Type: TokIdent, Text: "number2"},
 		{Type: TokAssign, Text: "="},
 		{Type: TokFloat, Text: "10.0"},
-		{Type: TokNewLine, Text: "\n"},
 		{Type: TokIdent, Text: "number3"},
 		{Type: TokAssign, Text: "="},
 		{Type: TokIdent, Text: "number1"},
@@ -162,7 +160,7 @@ func TestTernarySymbols(t *testing.T) {
 		{Type: TokIdent, Text: "a"},
 		{Type: TokQuestion, Text: "?"},
 		{Type: TokIdent, Text: "b"},
-		{Type: TokLCurl, Text: ":"},
+		{Type: TokColon, Text: ":"},
 		{Type: TokIdent, Text: "c"},
 		{Type: TokEOF, Text: ""},
 	}

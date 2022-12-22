@@ -8,6 +8,7 @@ import (
 	"github.com/ariaghora/zmol/pkg/lexer"
 	"github.com/ariaghora/zmol/pkg/parser"
 	"github.com/ariaghora/zmol/pkg/val"
+	"github.com/fatih/color"
 )
 
 type ZmolState struct {
@@ -29,7 +30,17 @@ func (s *ZmolState) Eval(source string) val.ZValue {
 	l.Lex()
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		s.printParserErrors(os.Stderr, p.Errors())
+		return val.ERROR("Parser errors")
+	}
 	return s.EvalProgram(program)
+}
+
+func (s *ZmolState) printParserErrors(out *os.File, errors []string) {
+	for _, msg := range errors {
+		color.Red(msg)
+	}
 }
 
 func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
@@ -166,7 +177,7 @@ func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue 
 	case ">=":
 		return left.GreaterThanEquals(right)
 	}
-	return nil
+	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }
 
 func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue {
@@ -186,7 +197,7 @@ func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue 
 		}
 		return left
 	}
-	return nil
+	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }
 
 func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
@@ -210,7 +221,7 @@ func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
 	case ">-":
 		return s.filterList(left, right)
 	}
-	return nil
+	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }
 
 func (s *ZmolState) applyFunction(fn *val.ZFunction, args []val.ZValue) val.ZValue {
@@ -240,7 +251,7 @@ func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue)
 	case left.Type() == val.ZLIST && right.Type() == val.ZLIST:
 		return s.evalListConcatExpression(left, right)
 	}
-	return nil
+	return val.ERROR(fmt.Sprintf("type mismatch: %s %s %s", left.Type(), operator, right.Type()))
 }
 
 func (s *ZmolState) evalIntegerInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -317,6 +328,15 @@ func (s *ZmolState) evalIdentifier(node *ast.Identifier) val.ZValue {
 	if val, ok := s.Env.Get(node.Value); ok {
 		return val
 	}
+	return RuntimeErrorf("identifier not found: " + node.Value)
+}
+
+func RuntimeErrorf(format string, args ...interface{}) val.ZValue {
+	color.Set(color.FgRed)
+	fmt.Println("\n*** RUNTIME ERROR ***")
+	fmt.Println(fmt.Sprintf(format, args...))
+	color.Unset()
+	os.Exit(1)
 	return nil
 }
 
@@ -347,7 +367,7 @@ func (s *ZmolState) evalIfStatement(node *ast.IfStatement) val.ZValue {
 	} else if node.Alternative != nil {
 		return s.EvalProgram(node.Alternative)
 	}
-	return nil
+	return val.NULL()
 }
 
 func isTruthy(value val.ZValue) bool {
@@ -428,7 +448,7 @@ func (s *ZmolState) evalIterStatement(node *ast.IterStatement) val.ZValue {
 		s.EvalProgram(node.Body)
 	}
 
-	return &val.ZNull{}
+	return val.NULL()
 }
 func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
 	if isErr(list) {

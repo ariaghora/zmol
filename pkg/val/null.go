@@ -2,6 +2,10 @@ package val
 
 type ZNull struct{}
 
+func NULL() *ZNull {
+	return &ZNull{}
+}
+
 func (z *ZNull) Type() ZValueType { return ZNULL }
 func (z *ZNull) Str() string      { return "" }
 func (z *ZNull) Equals(other ZValue) ZValue {
