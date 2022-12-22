@@ -199,19 +199,19 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 		return nil
 	}
 
-	p.nextToken()
-
 	statement.Consequence = p.parseBlockStatement()
-	p.nextToken()
 
-	if p.curTok.Type == lexer.TokElif {
-		statement.Alternative = p.parseIfStatement()
-	} else if p.curTok.Type == lexer.TokElse {
-		if !p.expectPeek(lexer.TokLCurl) {
-			return nil
+	if p.peekTok.Type == lexer.TokElse {
+		p.nextToken()
+		if p.peekTok.Type == lexer.TokIf {
+			p.nextToken()
+			statement.Alternative = p.parseIfStatement()
+		} else if p.peekTok.Type == lexer.TokLCurl {
+			p.nextToken()
+			statement.Alternative = p.parseBlockStatement()
+		} else {
+			p.peekError(lexer.TokLCurl)
 		}
-
-		statement.Alternative = p.parseBlockStatement()
 	}
 	return statement
 }
@@ -241,7 +241,7 @@ func (p *Parser) parseIter() *ast.IterStatement {
 		return nil
 	}
 
-	p.nextToken()
+	// p.nextToken()
 
 	body := p.parseBlockStatement()
 
