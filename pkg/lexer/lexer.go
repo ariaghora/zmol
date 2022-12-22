@@ -43,7 +43,6 @@ const (
 	TokEOF               = "EOF"
 	TokIdent             = "IDENT"
 	TokIf                = "if"
-	TokElif              = "elif"
 	TokElse              = "else"
 	TokTrue              = "true"
 	TokFalse             = "false"
@@ -93,7 +92,6 @@ var SingularTokOps = map[rune]TokType{
 var KeywordTok = map[string]TokType{
 	"let":   TokLet,
 	"if":    TokIf,
-	"elif":  TokElif,
 	"else":  TokElse,
 	"true":  TokTrue,
 	"false": TokFalse,
