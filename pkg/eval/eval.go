@@ -153,7 +153,7 @@ func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) v
 	max := int64(len(listVal.Elements) - 1)
 
 	if indexVal.Value < 0 || indexVal.Value > max {
-		return val.ERROR("index out of range")
+		RuntimeErrorf("index out of range: %d", indexVal.Value)
 	}
 
 	return listVal.Elements[indexVal.Value]
