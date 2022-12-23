@@ -15,10 +15,11 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 	zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
 
 	// itertools
+	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
 	zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
 	zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
-	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
 	zState.Env.Set("reverse", &val.ZNativeFunc{Fn: Z_reverse})
+	zState.Env.Set("zip", &val.ZNativeFunc{Fn: Z_zip})
 
 	// math
 	zState.Env.Set("sqrt", &val.ZNativeFunc{Fn: Z_sqrt})

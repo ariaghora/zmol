@@ -107,3 +107,33 @@ func Z_reverse(args ...val.ZValue) val.ZValue {
 	}
 	return list
 }
+
+func Z_zip(args ...val.ZValue) val.ZValue {
+	if len(args) != 2 {
+		return &val.ZError{Message: "zip takes 2 arguments"}
+	}
+	list1 := args[0]
+	list2 := args[1]
+	if list1.Type() != val.ZLIST || list2.Type() != val.ZLIST {
+		eval.RuntimeErrorf("zip takes 2 lists")
+	}
+
+	if len(list1.(*val.ZList).Elements) != len(list2.(*val.ZList).Elements) {
+		return eval.RuntimeErrorf("zip takes 2 lists with same length")
+	}
+
+	element := []val.ZValue{}
+	for i := 0; i < len(list1.(*val.ZList).Elements); i++ {
+		element = append(element, &val.ZList{
+			Elements: []val.ZValue{
+				list1.(*val.ZList).Elements[i],
+				list2.(*val.ZList).Elements[i],
+			},
+		})
+	}
+
+	list := &val.ZList{
+		Elements: element,
+	}
+	return list
+}
