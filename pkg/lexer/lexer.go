@@ -172,8 +172,19 @@ func (z *ZLex) Lex() error {
 				} else if z.code[z.i+1] == '>' {
 					z.addTok(TokPipe, 2) // Token `|>`
 				}
-			} else if z.code[z.i] == '-' && z.i+1 < len(z.code) && z.code[z.i+1] == '>' {
-				z.addTok(TokMap, 2) // Token `->`
+			} else if z.code[z.i] == '-' && z.i+1 < len(z.code) {
+				if z.code[z.i+1] == '>' {
+					z.addTok(TokMap, 2) // Token `->`
+				} else if z.code[z.i+1] == '-' {
+					// Handle comment
+					z.i += 2
+					for z.i < len(z.code) && z.code[z.i] != '\n' {
+						z.i++
+						if z.i == len(z.code) {
+							break
+						}
+					}
+				}
 			} else {
 				z.addTok(tokType, 1)
 			}
