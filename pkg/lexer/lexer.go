@@ -24,6 +24,7 @@ const (
 	TokLt                = "<"
 	TokLTE               = "<="
 	TokPipe              = "|>"
+	TokMap               = "->"
 	TokFilter            = ">-"
 	TokDot               = "."
 	TokComma             = ","
@@ -156,7 +157,7 @@ func (z *ZLex) Lex() error {
 			if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokGTE, 2)
 			} else if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '-' {
-				z.addTok(TokFilter, 2)
+				z.addTok(TokFilter, 2) // Token `>-`
 			} else if z.code[z.i] == '<' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
 				z.addTok(TokLTE, 2)
 			} else if z.code[z.i] == '=' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
@@ -167,10 +168,12 @@ func (z *ZLex) Lex() error {
 				z.addTok(TokAnd, 2)
 			} else if z.code[z.i] == '|' && z.i+1 < len(z.code) {
 				if z.code[z.i+1] == '|' {
-					z.addTok(TokOr, 2)
+					z.addTok(TokOr, 2) // Token `||`
 				} else if z.code[z.i+1] == '>' {
-					z.addTok(TokPipe, 2)
+					z.addTok(TokPipe, 2) // Token `|>`
 				}
+			} else if z.code[z.i] == '-' && z.i+1 < len(z.code) && z.code[z.i+1] == '>' {
+				z.addTok(TokMap, 2) // Token `->`
 			} else {
 				z.addTok(tokType, 1)
 			}

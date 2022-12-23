@@ -218,6 +218,8 @@ func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
 			return right.(*val.ZNativeFunc).Fn(left)
 		}
 		return s.applyFunction(right.(*val.ZFunction), []val.ZValue{left})
+	case "->":
+		return s.mapList(left, right)
 	case ">-":
 		return s.filterList(left, right)
 	}
@@ -450,6 +452,28 @@ func (s *ZmolState) evalIterStatement(node *ast.IterStatement) val.ZValue {
 
 	return val.NULL()
 }
+func (s *ZmolState) mapList(list val.ZValue, fn val.ZValue) val.ZValue {
+	if isErr(list) {
+		return list
+	}
+	var result []val.ZValue
+	for _, item := range list.(*val.ZList).Elements {
+		switch fn.Type() {
+		case val.ZNATIVE:
+			result = append(result, fn.(*val.ZNativeFunc).Fn(item))
+		case val.ZFUNCTION:
+			zState := NewZmolState(s.Env)
+			zState.Env.Set(fn.(*val.ZFunction).Params[0].Value, item)
+			evaluated := zState.EvalProgram(fn.(*val.ZFunction).Body)
+			if isErr(evaluated) {
+				return evaluated
+			}
+			result = append(result, evaluated)
+		}
+	}
+	return &val.ZList{Elements: result}
+}
+
 func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
 	if isErr(list) {
 		return list

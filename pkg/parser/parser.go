@@ -44,6 +44,7 @@ var precedences = map[lexer.TokType]int{
 	// Pipeline operator
 	lexer.TokPipe:   PrecPipeline,
 	lexer.TokFilter: PrecPipeline,
+	lexer.TokMap:    PrecPipeline,
 
 	// Arithmetic operators
 	lexer.TokPlus:   PrecAddSub,
@@ -82,9 +83,13 @@ func NewParser(l *lexer.ZLex) *Parser {
 		tokIdx: 0,
 	}
 
-	// Read two tokens, so curTok and peekTok are both set
+	// Initialize the parser with the first two tokens,
+	// curTok and peekTok
 	p.nextToken()
 
+	////
+	//// Prefix parse functions registration
+	////
 	p.prefixParseFns = make(map[lexer.TokType]prefixParseFn)
 	p.registerPrefix(lexer.TokIdent, p.parseIdentifier)
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
@@ -97,7 +102,13 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokLParen, p.parseGroupedExpression)
 	p.registerPrefix(lexer.TokLBrac, p.parseListLiteral)
 
+	////
+	//// Infix parse functions registration
+	////
+
 	p.infixParseFns = make(map[lexer.TokType]infixParseFn)
+
+	// Arithmetic operators
 	p.registerInfix(lexer.TokPlus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokMinus, p.parseInfixExpression)
 	p.registerInfix(lexer.TokAster, p.parseInfixExpression)
@@ -105,8 +116,9 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokAssign, p.parseInfixExpression)
 	p.registerInfix(lexer.TokMod, p.parseInfixExpression)
 
-	// List access
-	p.registerInfix(lexer.TokLBrac, p.parseIndexExpression)
+	// Logical operators
+	p.registerInfix(lexer.TokAnd, p.parseInfixExpression)
+	p.registerInfix(lexer.TokOr, p.parseInfixExpression)
 
 	// Boolean operators
 	p.registerInfix(lexer.TokEq, p.parseInfixExpression)
@@ -116,16 +128,17 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokGt, p.parseInfixExpression)
 	p.registerInfix(lexer.TokGTE, p.parseInfixExpression)
 
-	// Logical operators
-	p.registerInfix(lexer.TokAnd, p.parseInfixExpression)
-	p.registerInfix(lexer.TokOr, p.parseInfixExpression)
-
 	// Pipeline operator
 	p.registerInfix(lexer.TokPipe, p.parseInfixExpression)
 	p.registerInfix(lexer.TokFilter, p.parseInfixExpression)
+	p.registerInfix(lexer.TokMap, p.parseInfixExpression)
+
+	// List access
+	p.registerInfix(lexer.TokLBrac, p.parseIndexExpression)
 
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)
+
 	return p
 }
 
