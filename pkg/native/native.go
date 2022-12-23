@@ -17,6 +17,7 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 	// itertools
 	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
 	zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
+	zState.Env.Set("len", &val.ZNativeFunc{Fn: Z_len})
 	zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
 	zState.Env.Set("reverse", &val.ZNativeFunc{Fn: Z_reverse})
 	zState.Env.Set("zip", &val.ZNativeFunc{Fn: Z_zip})

@@ -44,6 +44,22 @@ func Z_filter(args ...val.ZValue) val.ZValue {
 	return list
 }
 
+func Z_len(args ...val.ZValue) val.ZValue {
+	if len(args) != 1 {
+		return &val.ZError{Message: "len takes 1 argument"}
+	}
+	list := args[0]
+	if list.Type() != val.ZLIST || list.Type() != val.ZSTRING {
+		return &val.ZError{Message: "len takes a list"}
+	}
+
+	if list.Type() == val.ZLIST {
+		return &val.ZInt{Value: int64(len(list.(*val.ZList).Elements))}
+	} else {
+		return &val.ZInt{Value: int64(len(list.(*val.ZString).Value))}
+	}
+}
+
 func Z_reduce(args ...val.ZValue) val.ZValue {
 	if len(args) != 3 {
 		return &val.ZError{Message: "reduce takes 3 arguments"}
