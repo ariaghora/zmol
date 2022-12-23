@@ -171,6 +171,8 @@ func (z *ZLex) Lex() error {
 					z.addTok(TokOr, 2) // Token `||`
 				} else if z.code[z.i+1] == '>' {
 					z.addTok(TokPipe, 2) // Token `|>`
+				} else {
+					z.addTok(TokBitOr, 1)
 				}
 			} else if z.code[z.i] == '-' && z.i+1 < len(z.code) {
 				if z.code[z.i+1] == '>' {
@@ -184,6 +186,8 @@ func (z *ZLex) Lex() error {
 							break
 						}
 					}
+				} else {
+					z.addTok(TokMinus, 1)
 				}
 			} else {
 				z.addTok(tokType, 1)

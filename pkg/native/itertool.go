@@ -46,11 +46,12 @@ func Z_filter(args ...val.ZValue) val.ZValue {
 
 func Z_len(args ...val.ZValue) val.ZValue {
 	if len(args) != 1 {
-		return &val.ZError{Message: "len takes 1 argument"}
+		eval.RuntimeErrorf("len takes 1 argument")
 	}
+
 	list := args[0]
-	if list.Type() != val.ZLIST || list.Type() != val.ZSTRING {
-		return &val.ZError{Message: "len takes a list"}
+	if list.Type() != val.ZLIST {
+		eval.RuntimeErrorf("len takes a list")
 	}
 
 	if list.Type() == val.ZLIST {

@@ -160,6 +160,30 @@ func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) v
 	return listVal.Elements[indexVal.Value]
 }
 
+func (s *ZmolState) evalIndexAssignment(ie *ast.IndexExpression, value val.ZValue) val.ZValue {
+	left := s.EvalProgram(ie.Left)
+	index := s.EvalProgram(ie.Index)
+
+	if left.Type() == val.ZLIST && index.Type() == val.ZINT {
+		return s.evalListIndexAssignment(left, index, value)
+	}
+	RuntimeErrorf("index assignment not supported: %s", string(left.Type()))
+	return val.NULL()
+}
+
+func (s *ZmolState) evalListIndexAssignment(list val.ZValue, index val.ZValue, value val.ZValue) val.ZValue {
+	listVal := list.(*val.ZList)
+	indexVal := index.(*val.ZInt)
+	max := int64(len(listVal.Elements) - 1)
+
+	if indexVal.Value < 0 || indexVal.Value > max {
+		RuntimeErrorf("index out of range: %d", indexVal.Value)
+	}
+
+	listVal.Elements[indexVal.Value] = value
+	return value
+}
+
 func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue {
 	left := s.EvalProgram(node.Left)
 	right := s.EvalProgram(node.Right)
@@ -202,7 +226,6 @@ func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue 
 }
 
 func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZValue {
-	fmt.Println("eval pipeline expression", node.Token.Text)
 	list := s.EvalProgram(node.List)
 	if isErr(list) {
 		return list
@@ -419,11 +442,19 @@ func RuntimeErrorf(format string, args ...interface{}) val.ZValue {
 }
 
 func (s *ZmolState) evalVariableAssignment(node *ast.InfixExpression) val.ZValue {
-	val := s.EvalProgram(node.Right)
-	if isErr(val) {
-		return val
+	value := s.EvalProgram(node.Right)
+	if isErr(value) {
+		return value
 	}
-	return s.Env.Set(node.Left.(*ast.Identifier).Value, val)
+
+	// if left is identifier, then it's a regular variable assignment
+	if _, ok := node.Left.(*ast.Identifier); ok {
+		return s.Env.Set(node.Left.(*ast.Identifier).Value, value)
+	} else if _, ok := node.Left.(*ast.IndexExpression); ok {
+		return s.evalIndexAssignment(node.Left.(*ast.IndexExpression), value)
+	}
+	RuntimeErrorf("invalid assignment")
+	return val.NULL()
 }
 
 func (s *ZmolState) evalBlockStatement(block *ast.BlockStatement) val.ZValue {

@@ -549,10 +549,14 @@ func (p *Parser) parsePipelineExpression(list ast.Expression) ast.Expression {
 	p.nextToken()
 
 	exp.FuncLiteral = p.parseExpression(PrecLowest)
-	p.nextToken()
-	if p.curTok.Type == lexer.TokLCurl {
-		exp.ExtraArgs = p.parseCallArguments(lexer.TokRCurl)
+
+	if !p.expectPeek(lexer.TokLCurl) {
+		// fmt.Println("Current token: ", p.curTok)
+		return nil
 	}
+
+	exp.ExtraArgs = p.parseCallArguments(lexer.TokRCurl)
+
 	return exp
 }
 
