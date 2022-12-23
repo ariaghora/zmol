@@ -241,3 +241,20 @@ func (is *IterStatement) Literal() string { return is.Token.Text }
 func (is *IterStatement) Str() string {
 	return is.Token.Text + " " + is.List.Str() + " " + is.Body.Str()
 }
+
+type PipelineExpression struct {
+	Token       lexer.ZTok // the '|>' token
+	List        Expression
+	FuncLiteral Expression
+	ExtraArgs   []Expression
+}
+
+func (pe *PipelineExpression) expressionNode() {}
+func (pe *PipelineExpression) Literal() string { return pe.Token.Text }
+func (pe *PipelineExpression) Str() string {
+	out := pe.List.Str() + " " + pe.Token.Text + " " + pe.FuncLiteral.Str()
+	for _, a := range pe.ExtraArgs {
+		out += " " + a.Str()
+	}
+	return out
+}

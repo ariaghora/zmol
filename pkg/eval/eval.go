@@ -62,6 +62,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalIfStatement(node)
 	case *ast.ExpressionStatement:
 		return s.EvalProgram(node.Expression)
+	case *ast.PipelineExpression:
+		return s.evalPipelineExpression(node)
 	case *ast.InfixExpression:
 		switch node.Operator {
 		case "=":
@@ -70,8 +72,6 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 			return s.evalBooleanExpression(node)
 		case "&&", "||":
 			return s.evalLogicalExpression(node)
-		case "|>", "->", ">-":
-			return s.evalPipeExpression(node)
 		default:
 			left := s.EvalProgram(node.Left)
 			right := s.EvalProgram(node.Right)
@@ -102,6 +102,7 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 	case *ast.CallExpression:
 		return s.evalCallExpression(node)
 	}
+	RuntimeErrorf("Unknown node type: %T", node)
 	return nil
 }
 
@@ -200,7 +201,54 @@ func (s *ZmolState) evalLogicalExpression(node *ast.InfixExpression) val.ZValue 
 	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }
 
-func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
+func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZValue {
+	fmt.Println("eval pipeline expression", node.Token.Text)
+	list := s.EvalProgram(node.List)
+	if isErr(list) {
+		return list
+	}
+
+	// check if function is a function
+	function := s.EvalProgram(node.FuncLiteral)
+	if function.Type() != val.ZFUNCTION && function.Type() != val.ZNATIVE {
+		return val.ERROR("Right side of pipeline must be a function")
+	}
+
+	args := []val.ZValue{list}
+	// evaluate extra arguments
+	for _, arg := range node.ExtraArgs {
+		args = append(args, s.EvalProgram(arg))
+	}
+
+	switch node.Token.Type {
+	case lexer.TokPipe:
+		if function.Type() == val.ZNATIVE {
+			return function.(*val.ZNativeFunc).Fn(list)
+		}
+		return s.applyPipe(function.(*val.ZFunction), args)
+	case lexer.TokMap:
+		// check if list is a list
+		if list.Type() != val.ZLIST {
+			RuntimeErrorf("Left side of pipeline must be a list")
+		}
+		if function.Type() == val.ZNATIVE {
+			return function.(*val.ZNativeFunc).Fn(list)
+		}
+		return s.applyMap(function.(*val.ZFunction), args)
+	case lexer.TokFilter:
+		// check if list is a list
+		if list.Type() != val.ZLIST {
+			RuntimeErrorf("Left side of pipeline must be a list")
+		}
+		RuntimeErrorf("Filter pipeline not implemented yet")
+	}
+
+	RuntimeErrorf("Unknown pipeline operator: %s", node.Token)
+	return val.ERROR("Unknown pipeline operator")
+}
+
+func (s *ZmolState) evalPipeExpression_Deprecated(node *ast.InfixExpression) val.ZValue {
+	fmt.Println("Deprecated pipe expression")
 	left := s.EvalProgram(node.Left)
 	if isErr(left) {
 		return left
@@ -217,7 +265,7 @@ func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
 		if right.Type() == val.ZNATIVE {
 			return right.(*val.ZNativeFunc).Fn(left)
 		}
-		return s.applyFunction(right.(*val.ZFunction), []val.ZValue{left})
+		return s.applyPipe(right.(*val.ZFunction), []val.ZValue{left})
 	case "->":
 		return s.mapList(left, right)
 	case ">-":
@@ -226,17 +274,45 @@ func (s *ZmolState) evalPipeExpression(node *ast.InfixExpression) val.ZValue {
 	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }
 
-func (s *ZmolState) applyFunction(fn *val.ZFunction, args []val.ZValue) val.ZValue {
-	// Ensure the number of arguments is exactly one
-	if len(args) != 1 {
-		return val.ERROR("Function to apply must have exactly one argument")
+func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
+	if len(args) != len(fn.Params) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params), len(args))
 	}
 
 	zState := NewZmolState(fn.Env)
-	zState.Env.Set(fn.Params[0].Value, args[0])
+
+	for i, param := range fn.Params {
+		zState.Env.Set(param.Value, args[i])
+	}
 
 	evaluated := zState.EvalProgram(fn.Body)
 	return evaluated
+}
+
+func (s *ZmolState) applyMap(fn *val.ZFunction, args []val.ZValue) val.ZValue {
+	if len(args) != len(fn.Params) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params), len(args))
+	}
+
+	zState := NewZmolState(fn.Env)
+
+	list := args[0].(*val.ZList)
+
+	// Evaluate the function for each element in the list
+	newList := &val.ZList{Elements: []val.ZValue{}}
+	for _, elem := range list.Elements {
+		// Set the first argument to the current element
+		zState.Env.Set(fn.Params[0].Value, elem)
+
+		// set extra arguments if any
+		for i, param := range fn.Params[1:] {
+			zState.Env.Set(param.Value, args[i+1])
+		}
+		evaluated := zState.EvalProgram(fn.Body)
+		newList.Elements = append(newList.Elements, evaluated)
+	}
+
+	return newList
 }
 
 func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue) val.ZValue {

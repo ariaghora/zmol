@@ -128,16 +128,16 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokGt, p.parseInfixExpression)
 	p.registerInfix(lexer.TokGTE, p.parseInfixExpression)
 
-	// Pipeline operator
-	p.registerInfix(lexer.TokPipe, p.parseInfixExpression)
-	p.registerInfix(lexer.TokFilter, p.parseInfixExpression)
-	p.registerInfix(lexer.TokMap, p.parseInfixExpression)
-
 	// List access
 	p.registerInfix(lexer.TokLBrac, p.parseIndexExpression)
 
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)
+
+	// Pipeline operator
+	p.registerInfix(lexer.TokPipe, p.parsePipelineExpression)
+	p.registerInfix(lexer.TokFilter, p.parsePipelineExpression)
+	p.registerInfix(lexer.TokMap, p.parsePipelineExpression)
 
 	return p
 }
@@ -253,8 +253,6 @@ func (p *Parser) parseIter() *ast.IterStatement {
 	if !p.expectPeek(lexer.TokLCurl) {
 		return nil
 	}
-
-	// p.nextToken()
 
 	body := p.parseBlockStatement()
 
@@ -391,8 +389,10 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 	prec := p.curPrec()
 	p.nextToken()
-	expression.Right = p.parseExpression(prec)
 
+	right := p.parseExpression(prec)
+
+	expression.Right = right
 	return expression
 }
 
@@ -464,7 +464,7 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		Function: function,
 	}
 
-	exp.Arguments = p.parseCallArguments()
+	exp.Arguments = p.parseCallArguments(lexer.TokRParen)
 	return exp
 }
 
@@ -487,10 +487,10 @@ func (p *Parser) parserTernaryExpression(condition ast.Expression) ast.Expressio
 	return exp
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
+func (p *Parser) parseCallArguments(enclosingDelim lexer.TokType) []ast.Expression {
 	args := []ast.Expression{}
 
-	if p.peekTok.Type == lexer.TokRParen {
+	if p.peekTok.Type == enclosingDelim {
 		p.nextToken()
 		return args
 	}
@@ -504,7 +504,7 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 		args = append(args, p.parseExpression(PrecLowest))
 	}
 
-	if !p.expectPeek(lexer.TokRParen) {
+	if !p.expectPeek(enclosingDelim) {
 		return nil
 	}
 
@@ -536,6 +536,23 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 		return nil
 	}
 
+	return exp
+}
+
+func (p *Parser) parsePipelineExpression(list ast.Expression) ast.Expression {
+	exp := &ast.PipelineExpression{
+		Token:     p.curTok,
+		List:      list,
+		ExtraArgs: []ast.Expression{},
+	}
+
+	p.nextToken()
+
+	exp.FuncLiteral = p.parseExpression(PrecLowest)
+	p.nextToken()
+	if p.curTok.Type == lexer.TokLCurl {
+		exp.ExtraArgs = p.parseCallArguments(lexer.TokRCurl)
+	}
 	return exp
 }
 
