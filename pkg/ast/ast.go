@@ -90,6 +90,15 @@ func (fl *FloatLiteral) expressionNode() {}
 func (ie *FloatLiteral) Literal() string { return ie.Token.Text }
 func (ie *FloatLiteral) Str() string     { return ie.Token.Text }
 
+type StringLiteral struct {
+	Token lexer.ZTok
+	Value string
+}
+
+func (sl *StringLiteral) expressionNode() {}
+func (sl *StringLiteral) Literal() string { return sl.Token.Text }
+func (sl *StringLiteral) Str() string     { return sl.Token.Text }
+
 type BooleanLiteral struct {
 	Token lexer.ZTok
 	Value bool

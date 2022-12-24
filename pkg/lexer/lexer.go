@@ -51,6 +51,7 @@ const (
 	TokAs                = "as"
 	TokInt               = "INT"
 	TokFloat             = "FLOAT"
+	TokString            = "STRING"
 )
 
 type ZTok struct {
@@ -135,6 +136,19 @@ func (z *ZLex) addNumber() {
 	}
 }
 
+func (z *ZLex) addString() {
+	var nChar int
+	z.i++
+	for z.i+nChar < len(z.code) && z.code[z.i+nChar] != '"' {
+		nChar++
+	}
+	if z.i+nChar >= len(z.code) {
+		panic(errors.New("unterminated string"))
+	}
+	z.addTok(TokString, nChar)
+	z.i++
+}
+
 func (z *ZLex) addTok(tokType TokType, nChar int) {
 	z.Tokens = append(z.Tokens, ZTok{
 		Type: tokType,
@@ -196,6 +210,8 @@ func (z *ZLex) Lex() error {
 			z.addIdent()
 		} else if unicode.IsDigit(rune(z.code[z.i])) {
 			z.addNumber()
+		} else if z.code[z.i] == '"' {
+			z.addString()
 		} else {
 			return errors.New("Invalid token: " + string(z.code[z.i]))
 		}

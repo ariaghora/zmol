@@ -6,7 +6,7 @@ type ZString struct {
 }
 
 func (z *ZString) Type() ZValueType { return ZSTRING }
-func (z *ZString) Str() string      { return z.Value }
+func (z *ZString) Str() string      { return "\"" + z.Value + "\"" }
 func (z *ZString) Equals(other ZValue) ZValue {
 	if other.Type() != ZSTRING {
 		return BOOL(false)

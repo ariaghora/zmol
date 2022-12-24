@@ -81,6 +81,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalIntegerLiteral(node)
 	case *ast.FloatLiteral:
 		return s.evalFloatLiteral(node)
+	case *ast.StringLiteral:
+		return &val.ZString{Value: node.Value}
 	case *ast.BooleanLiteral:
 		return s.evalBooleanLiteral(node)
 	case *ast.ListLiteral:

@@ -94,6 +94,7 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokIdent, p.parseIdentifier)
 	p.registerPrefix(lexer.TokInt, p.parseIntegerLiteral)
 	p.registerPrefix(lexer.TokFloat, p.parseFloatLiteral)
+	p.registerPrefix(lexer.TokString, p.parseStringLiteral)
 	p.registerPrefix(lexer.TokTrue, p.parseBooleanLiteral)
 	p.registerPrefix(lexer.TokFalse, p.parseBooleanLiteral)
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
@@ -331,6 +332,10 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parseStringLiteral() ast.Expression {
+	return &ast.StringLiteral{Token: p.curTok, Value: p.curTok.Text}
 }
 
 func (p *Parser) parseBooleanLiteral() ast.Expression {
