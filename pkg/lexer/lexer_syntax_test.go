@@ -31,7 +31,7 @@ func TestAssignmentStatement(t *testing.T) {
 	}
 
 	for i, tok := range l.Tokens {
-		if tok != tests[i] {
+		if tok.Type != tests[i].Type {
 			t.Errorf("Expected token %d to be %v, got %v", i, tests[i], tok)
 		}
 	}
@@ -63,7 +63,7 @@ func TestFunctionDefinition(t *testing.T) {
 	}
 
 	for i, tok := range l.Tokens {
-		if tok != tests[i] {
+		if tok.Type != tests[i].Type && tok.Text != tests[i].Text {
 			t.Errorf("Expected token %d to be %v, got %v", i, tests[i], tok)
 		}
 	}

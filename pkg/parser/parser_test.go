@@ -312,11 +312,11 @@ func TestParseFuncLiteral(t *testing.T) {
 	}
 
 	if function.Parameters[0].Str() != "x" {
-		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0])
+		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0].Str())
 	}
 
 	if function.Parameters[1].Str() != "y" {
-		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
+		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1].Str())
 	}
 
 	expr := function.Body
@@ -376,11 +376,11 @@ func TestParseFuncLiteralMultiline(t *testing.T) {
 	}
 
 	if function.Parameters[0].Str() != "x" {
-		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0])
+		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0].Str())
 	}
 
 	if function.Parameters[1].Str() != "y" {
-		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
+		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1].Str())
 	}
 
 	if len(function.Body.Statements) != 2 {
@@ -469,11 +469,11 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	if function.Parameters[0].Str() != "x" {
-		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0])
+		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0].Str())
 	}
 
 	if function.Parameters[1].Str() != "y" {
-		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1])
+		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1].Str())
 	}
 
 }

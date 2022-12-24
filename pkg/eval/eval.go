@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -25,16 +26,20 @@ func NewZmolState(ParentEnv *val.Env) *ZmolState {
 	}
 }
 
-func (s *ZmolState) Eval(source string) val.ZValue {
+func (s *ZmolState) Eval(source string) (val.ZValue, error) {
 	l := lexer.NewLexer(source)
-	l.Lex()
+	err := l.Lex()
+	if err != nil {
+		return nil, err
+	}
+
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		s.printParserErrors(os.Stderr, p.Errors())
-		return val.ERROR("Parser errors")
+		return val.ERROR("Parser errors"), errors.New("parser errors")
 	}
-	return s.EvalProgram(program)
+	return s.EvalProgram(program), nil
 }
 
 func (s *ZmolState) printParserErrors(out *os.File, errors []string) {
@@ -271,7 +276,7 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 		RuntimeErrorf("Filter pipeline not implemented yet")
 	}
 
-	msg := fmt.Sprintf("Unknown pipeline operator: %s", node.Token)
+	msg := fmt.Sprintf("Unknown pipeline operator: %s", node.Token.Text)
 	RuntimeErrorf(msg)
 	return val.ERROR(msg)
 }

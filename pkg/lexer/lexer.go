@@ -3,6 +3,7 @@ package lexer
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"unicode"
 )
 
@@ -55,17 +56,6 @@ const (
 	TokString            = "STRING"
 )
 
-type ZTok struct {
-	Type TokType
-	Text string
-}
-
-type ZLex struct {
-	i      int
-	Tokens []ZTok
-	code   string
-}
-
 var SingularTokOps = map[rune]TokType{
 	'@': TokAt,
 	'+': TokPlus,
@@ -100,6 +90,29 @@ var KeywordTok = map[string]TokType{
 	"false": TokFalse,
 	"iter":  TokIter,
 	"as":    TokAs,
+}
+
+type ZTok struct {
+	Type TokType
+	Text string
+	Col  int
+	Row  int
+}
+
+type ZLex struct {
+	i        int
+	Tokens   []ZTok
+	code     string
+	Col, Row int
+}
+
+func NewLexer(code string) *ZLex {
+	return &ZLex{code: code, i: 0, Col: 0, Row: 0}
+}
+
+func (z *ZLex) advanceIndex(n int) {
+	z.i += n
+	z.Col += n
 }
 
 func (z *ZLex) addIdent() {
@@ -139,7 +152,7 @@ func (z *ZLex) addNumber() {
 
 func (z *ZLex) addString() {
 	var nChar int
-	z.i++
+	z.advanceIndex(1)
 
 	out := ""
 	for z.i+nChar < len(z.code) && z.code[z.i+nChar] != '"' {
@@ -169,27 +182,35 @@ func (z *ZLex) addString() {
 	z.Tokens = append(z.Tokens, ZTok{
 		Type: TokString,
 		Text: out,
+		Col:  z.Col,
+		Row:  z.Row,
 	})
-	z.i += nChar + 1
+	z.advanceIndex(nChar + 1)
 }
 
 func (z *ZLex) addTok(tokType TokType, nChar int) {
 	z.Tokens = append(z.Tokens, ZTok{
 		Type: tokType,
 		Text: z.code[z.i : z.i+nChar],
+		Col:  z.Col,
+		Row:  z.Row,
 	})
-	z.i += nChar
+	z.advanceIndex(nChar)
 }
 
 func (z *ZLex) skipWhitespace() {
 	for z.i < len(z.code) && unicode.IsSpace(rune(z.code[z.i])) {
-		z.i++
+		z.advanceIndex(1)
 	}
 }
 
 func (z *ZLex) Lex() error {
 	for z.i < len(z.code) {
 		if unicode.IsSpace(rune(z.code[z.i])) {
+			if z.code[z.i] == '\n' {
+				z.Row++
+				z.Col = 0
+			}
 			z.skipWhitespace()
 		} else if tokType, ok := SingularTokOps[rune(z.code[z.i])]; ok {
 			if z.code[z.i] == '>' && z.i+1 < len(z.code) && z.code[z.i+1] == '=' {
@@ -217,9 +238,9 @@ func (z *ZLex) Lex() error {
 					z.addTok(TokMap, 2) // Token `->`
 				} else if z.code[z.i+1] == '-' {
 					// Handle comment
-					z.i += 2
+					z.advanceIndex(2)
 					for z.i < len(z.code) && z.code[z.i] != '\n' {
-						z.i++
+						z.advanceIndex(1)
 						if z.i == len(z.code) {
 							break
 						}
@@ -237,13 +258,16 @@ func (z *ZLex) Lex() error {
 		} else if z.code[z.i] == '"' {
 			z.addString()
 		} else {
-			return errors.New("Invalid token: " + string(z.code[z.i]))
+			return errors.New(
+				"Invalid token: " +
+					string(z.code[z.i]) +
+					" at line " +
+					strconv.Itoa(z.Row+1) +
+					", col " +
+					strconv.Itoa(z.Col+1),
+			)
 		}
 	}
 	z.Tokens = append(z.Tokens, ZTok{Type: TokEOF})
 	return nil
-}
-
-func NewLexer(code string) *ZLex {
-	return &ZLex{code: code}
 }

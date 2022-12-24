@@ -38,8 +38,12 @@ func (z *Zmol) Run(code string) {
 	// 	}
 	// }()
 
-	result := z.state.Eval(code)
-	fmt.Println(result.Str())
+	result, err := z.state.Eval(code)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(result.Str())
+	}
 }
 
 func printBanner() {

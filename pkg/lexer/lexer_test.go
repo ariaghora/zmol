@@ -39,7 +39,7 @@ func TestLexSimpleOpsSequence(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type && tok.Text != expectedTokens[i].Text {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}
@@ -66,7 +66,7 @@ func TestLexOpsSeqLeadingSpace(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type && tok.Text != expectedTokens[i].Text {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}
@@ -92,7 +92,7 @@ func TestTwoCharOpsSeq(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type && tok.Text != expectedTokens[i].Text {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}
@@ -137,7 +137,7 @@ func TestSimpleScript(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type && tok.Text != expectedTokens[i].Text {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}
@@ -166,7 +166,7 @@ func TestTernarySymbols(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}
@@ -195,7 +195,7 @@ func TestCurlyBraces(t *testing.T) {
 	}
 
 	for i, tok := range lexer.Tokens {
-		if tok != expectedTokens[i] {
+		if tok.Type != expectedTokens[i].Type {
 			t.Errorf("Expected token %d to be %v, got %v", i, expectedTokens[i], tok)
 		}
 	}

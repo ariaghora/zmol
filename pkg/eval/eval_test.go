@@ -80,7 +80,11 @@ func TestFunctionCalls(t *testing.T) {
 
 func testEval(input string) val.ZValue {
 	state := NewZmolState(nil)
-	return state.Eval(input)
+	value, err := state.Eval(input)
+	if err != nil {
+		return val.ERROR(err.Error())
+	}
+	return value
 }
 
 func testIntegerObject(t *testing.T, obj val.ZValue, expected int64) bool {
