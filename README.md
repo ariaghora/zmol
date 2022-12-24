@@ -7,6 +7,8 @@ A toy language that aims to be:
 - Able to solve non-trivial problems (like hello world)
 - Zmol in size
 
+Refer to the [docs](docs.md) for more information.
+
 The Euler Project problem 1 solution in Zmol:
 
 ```
