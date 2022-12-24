@@ -262,7 +262,7 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 	switch node.Token.Type {
 	case lexer.TokPipe:
 		if function.Type() == val.ZNATIVE {
-			return function.(*val.ZNativeFunc).Fn(list)
+			return function.(*val.ZNativeFunc).Fn(args...)
 		}
 		return s.applyPipe(function.(*val.ZFunction), args)
 	case lexer.TokMap:

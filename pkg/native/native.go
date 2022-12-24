@@ -3,6 +3,7 @@ package native
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/eval"
@@ -14,6 +15,7 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 	zState.Env.Set("print", &val.ZNativeFunc{Fn: Z_print})
 	zState.Env.Set("println", &val.ZNativeFunc{Fn: Z_println})
 	zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
+	zState.Env.Set("read_string_file", &val.ZNativeFunc{Fn: Z_read_string_file})
 
 	// itertools
 	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
@@ -25,6 +27,9 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 
 	// math
 	zState.Env.Set("sqrt", &val.ZNativeFunc{Fn: Z_sqrt})
+
+	// string manipulation
+	zState.Env.Set("split", &val.ZNativeFunc{Fn: Z_split})
 
 	// type conversion
 	zState.Env.Set("int", &val.ZNativeFunc{Fn: Z_int})
@@ -105,4 +110,21 @@ func Z_int(args ...val.ZValue) val.ZValue {
 		eval.RuntimeErrorf("int() takes a number or string as argument")
 	}
 	return &val.ZNull{}
+}
+
+func Z_read_string_file(args ...val.ZValue) val.ZValue {
+	if len(args) != 1 {
+		return &val.ZError{Message: "read_string_file takes 1 argument"}
+	}
+
+	if args[0].Type() != val.ZSTRING {
+		return &val.ZError{Message: "read_string_file takes 1 string"}
+	}
+
+	filePath := args[0].(*val.ZString).Value
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		eval.RuntimeErrorf("cannot read file " + filePath)
+	}
+	return val.STRING(string(content))
 }
