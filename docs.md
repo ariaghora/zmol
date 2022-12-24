@@ -137,7 +137,7 @@ iter {
 | `=` | Assignment operator |
 | `+ - * / %` | Arithmetic operators |
 | `== != < > <= >=` | Comparison operators |
-| `&& ||` | Logical AND and OR operators |
+| `&& \|\|` | Logical AND and OR operators |
 | `!` | Logical negation operator |
 | `[]` | Indexing operator |
 | `@` | Function definition operator |
@@ -177,7 +177,7 @@ We can use following operators:
 | --- | --- | --- |
 | `->` | Element-wise map: Applies a function to each element of a list or array and returns a new list or array with the modified elements. | `[1, 2, 3] -> scale{2}` returns `[2, 4, 6]` |
 | `>-` | Element-wise filter: Filters a list or array based on a given predicate function, returning a new list or array with only the elements that satisfy the predicate. | `[1, 2, 3, 4] >- is_even{}` returns `[2, 4]` |
-| `|>` | Pipe: Uses the evaluated expression on the left-hand side (LHS) as the input for the function on the right-hand side (RHS). | `[1, 2, 3] |> sum{}` returns `6` |
+| `\|>` | Pipe: Uses the evaluated expression on the left-hand side (LHS) as the input for the function on the right-hand side (RHS). | `[1, 2, 3] \|> sum{}` returns `6` |
 
 The special operators allow you to pass the result of the LHS expression as the input of the function on the RHS. For example, in the expression `[1, 2, 3] -> scale{2}`, the `->` operator passes the list `[1, 2, 3]` as the input to the `scale` function, which multiplies each element of the list by `2` and returns a new list with the modified elements.
 
