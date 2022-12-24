@@ -55,8 +55,8 @@ sub = @(x, y) { x - y }
 
 calculate = @(x, y, func) { func(x, y) }
 
-print(calculate(10, 5, add))
-print(calculate(10, 5, sub))
+println(calculate(10, 5, add))
+println(calculate(10, 5, sub))
 ```
 
 Anonymous functions are also supported.
@@ -100,7 +100,7 @@ if n_wheels == 4 {
 }
 ```
 
-# Loops
+## Loops
 Loops primarily iterate over iterables, such as lists, tables, and strings.
 The loop statement uses `iter` keyword, followed by the iterable to be iterated over.
 We can use `as` keyword to bind the current value to a variable.
@@ -117,7 +117,7 @@ iter [0 ... 10] {
 }
 ```
 
-## (WIP) Sentinel loop 
+### (WIP) Sentinel loop 
 For infinite loops, we can use following syntax:
 
 ```
