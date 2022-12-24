@@ -294,6 +294,10 @@ func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
 func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 
 	list := args[0]
+	extraArgs := []val.ZValue{}
+	if len(args) > 1 {
+		extraArgs = args[1:]
+	}
 
 	// error if the list is not a list or string
 	if list.Type() != val.ZLIST && list.Type() != val.ZSTRING {
@@ -306,12 +310,16 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 		switch list.Type() {
 		case val.ZSTRING:
 			for _, elem := range list.(*val.ZString).Value {
-				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(&val.ZString{Value: string(elem)}))
+				finalArgs := []val.ZValue{&val.ZString{Value: string(elem)}}
+				finalArgs = append(finalArgs, extraArgs...)
+				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(finalArgs...))
 			}
 
 		case val.ZLIST:
 			for _, elem := range list.(*val.ZList).Elements {
-				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(elem))
+				finalArgs := []val.ZValue{elem}
+				finalArgs = append(finalArgs, extraArgs...)
+				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(finalArgs...))
 			}
 		}
 

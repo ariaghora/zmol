@@ -33,6 +33,7 @@ func RegisterNativeFunc(zState *eval.ZmolState) {
 
 	// type conversion
 	zState.Env.Set("int", &val.ZNativeFunc{Fn: Z_int})
+	zState.Env.Set("float", &val.ZNativeFunc{Fn: Z_float})
 }
 
 func EnsureFloat(n val.ZValue) (float64, error) {
@@ -108,6 +109,29 @@ func Z_int(args ...val.ZValue) val.ZValue {
 		return val.INT(res)
 	default:
 		eval.RuntimeErrorf("int() takes a number or string as argument")
+	}
+	return &val.ZNull{}
+}
+
+func Z_float(args ...val.ZValue) val.ZValue {
+	if len(args) != 1 {
+		return &val.ZError{Message: "float takes 1 argument"}
+	}
+
+	switch args[0].Type() {
+	case val.ZINT:
+		return val.FLOAT(float64(args[0].(*val.ZInt).Value))
+	case val.ZFLOAT:
+		return args[0]
+	case val.ZSTRING:
+		strval := args[0].(*val.ZString).Value
+		res, err := strconv.ParseFloat(strval, 64)
+		if err != nil {
+			eval.RuntimeErrorf("cannot convert string \"" + strval + "\" to float")
+		}
+		return val.FLOAT(res)
+	default:
+		eval.RuntimeErrorf("float() takes a number or string as argument")
 	}
 	return &val.ZNull{}
 }
