@@ -19,7 +19,7 @@ func TestLexEmptySource(t *testing.T) {
 }
 
 func TestLexSimpleOpsSequence(t *testing.T) {
-	lexer := NewLexer("+-><.")
+	lexer := NewLexer("+ - > < .")
 	err := lexer.Lex()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -46,7 +46,7 @@ func TestLexSimpleOpsSequence(t *testing.T) {
 }
 
 func TestLexOpsSeqLeadingSpace(t *testing.T) {
-	lexer := NewLexer(" +-><.")
+	lexer := NewLexer(" + - > < . ")
 	err := lexer.Lex()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)

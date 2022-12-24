@@ -145,8 +145,10 @@ func (s *ZmolState) evalIndexExpression(ie *ast.IndexExpression) val.ZValue {
 	switch {
 	case left.Type() == val.ZLIST && index.Type() == val.ZINT:
 		return s.evalListIndexExpression(left, index)
+	case left.Type() == val.ZSTRING && index.Type() == val.ZINT:
+		return s.evalStringIndexExpression(left, index)
 	default:
-		return val.ERROR("index operator not supported: %s" + string(left.Type()))
+		return val.ERROR("cannot perform indexing on " + string(left.Type()) + " type")
 	}
 }
 
@@ -160,6 +162,18 @@ func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) v
 	}
 
 	return listVal.Elements[indexVal.Value]
+}
+
+func (s *ZmolState) evalStringIndexExpression(str val.ZValue, index val.ZValue) val.ZValue {
+	strVal := str.(*val.ZString)
+	indexVal := index.(*val.ZInt)
+	max := int64(len(strVal.Value) - 1)
+
+	if indexVal.Value < 0 || indexVal.Value > max {
+		RuntimeErrorf("index out of range: %d", indexVal.Value)
+	}
+
+	return &val.ZString{Value: string(strVal.Value[indexVal.Value])}
 }
 
 func (s *ZmolState) evalIndexAssignment(ie *ast.IndexExpression, value val.ZValue) val.ZValue {
@@ -239,8 +253,8 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 		return val.ERROR("Right side of pipeline must be a function")
 	}
 
+	// prepare first and extra arguments
 	args := []val.ZValue{list}
-	// evaluate extra arguments
 	for _, arg := range node.ExtraArgs {
 		args = append(args, s.EvalProgram(arg))
 	}
@@ -252,51 +266,14 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 		}
 		return s.applyPipe(function.(*val.ZFunction), args)
 	case lexer.TokMap:
-		// check if list is a list
-		if list.Type() != val.ZLIST {
-			RuntimeErrorf("Left side of pipeline must be a list")
-		}
-		if function.Type() == val.ZNATIVE {
-			return function.(*val.ZNativeFunc).Fn(list)
-		}
-		return s.applyMap(function.(*val.ZFunction), args)
+		return s.applyMap(function, args)
 	case lexer.TokFilter:
-		// check if list is a list
-		if list.Type() != val.ZLIST {
-			RuntimeErrorf("Left side of pipeline must be a list")
-		}
 		RuntimeErrorf("Filter pipeline not implemented yet")
 	}
 
-	RuntimeErrorf("Unknown pipeline operator: %s", node.Token)
-	return val.ERROR("Unknown pipeline operator")
-}
-
-func (s *ZmolState) evalPipeExpression_Deprecated(node *ast.InfixExpression) val.ZValue {
-	fmt.Println("Deprecated pipe expression")
-	left := s.EvalProgram(node.Left)
-	if isErr(left) {
-		return left
-	}
-
-	// Check if right is a function
-	right := s.EvalProgram(node.Right)
-	if right.Type() != val.ZFUNCTION && right.Type() != val.ZNATIVE {
-		return val.ERROR("Right side of pipe must be a function")
-	}
-
-	switch node.Operator {
-	case "|>":
-		if right.Type() == val.ZNATIVE {
-			return right.(*val.ZNativeFunc).Fn(left)
-		}
-		return s.applyPipe(right.(*val.ZFunction), []val.ZValue{left})
-	case "->":
-		return s.mapList(left, right)
-	case ">-":
-		return s.filterList(left, right)
-	}
-	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
+	msg := fmt.Sprintf("Unknown pipeline operator: %s", node.Token)
+	RuntimeErrorf(msg)
+	return val.ERROR(msg)
 }
 
 func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
@@ -314,27 +291,62 @@ func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
 	return evaluated
 }
 
-func (s *ZmolState) applyMap(fn *val.ZFunction, args []val.ZValue) val.ZValue {
-	if len(args) != len(fn.Params) {
-		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params), len(args))
+func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
+
+	list := args[0]
+
+	// error if the list is not a list or string
+	if list.Type() != val.ZLIST && list.Type() != val.ZSTRING {
+		RuntimeErrorf("Left side of pipeline must be iterable")
 	}
 
-	zState := NewZmolState(fn.Env)
+	//// Case 1: Native function
+	if fn.Type() == val.ZNATIVE {
+		newList := &val.ZList{Elements: []val.ZValue{}}
+		switch list.Type() {
+		case val.ZSTRING:
+			for _, elem := range list.(*val.ZString).Value {
+				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(&val.ZString{Value: string(elem)}))
+			}
 
-	list := args[0].(*val.ZList)
+		case val.ZLIST:
+			for _, elem := range list.(*val.ZList).Elements {
+				newList.Elements = append(newList.Elements, fn.(*val.ZNativeFunc).Fn(elem))
+			}
+		}
+
+		return newList
+	}
+
+	//// Case 2: User-defined function
+	udFunc := fn.(*val.ZFunction)
+	zState := NewZmolState(udFunc.Env)
+	if len(args) != len(udFunc.Params) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params), len(args))
+	}
 
 	// Evaluate the function for each element in the list
 	newList := &val.ZList{Elements: []val.ZValue{}}
-	for _, elem := range list.Elements {
-		// Set the first argument to the current element
-		zState.Env.Set(fn.Params[0].Value, elem)
-
-		// set extra arguments if any
-		for i, param := range fn.Params[1:] {
-			zState.Env.Set(param.Value, args[i+1])
+	switch list.Type() {
+	case val.ZSTRING:
+		for _, elem := range list.(*val.ZString).Value {
+			zState.Env.Set(udFunc.Params[0].Value, &val.ZString{Value: string(elem)})
+			for i, param := range udFunc.Params[1:] {
+				zState.Env.Set(param.Value, args[i+1])
+			}
+			evaluated := zState.EvalProgram(udFunc.Body)
+			newList.Elements = append(newList.Elements, evaluated)
 		}
-		evaluated := zState.EvalProgram(fn.Body)
-		newList.Elements = append(newList.Elements, evaluated)
+
+	case val.ZLIST:
+		for _, elem := range list.(*val.ZList).Elements {
+			zState.Env.Set(udFunc.Params[0].Value, elem)
+			for i, param := range udFunc.Params[1:] {
+				zState.Env.Set(param.Value, args[i+1])
+			}
+			evaluated := zState.EvalProgram(udFunc.Body)
+			newList.Elements = append(newList.Elements, evaluated)
+		}
 	}
 
 	return newList
@@ -353,7 +365,11 @@ func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue)
 
 	case left.Type() == val.ZLIST && right.Type() == val.ZLIST:
 		return s.evalListConcatExpression(left, right)
+
+	case left.Type() == val.ZSTRING && right.Type() == val.ZSTRING:
+		return &val.ZString{Value: left.(*val.ZString).Value + right.(*val.ZString).Value}
 	}
+
 	return val.ERROR(fmt.Sprintf("type mismatch: %s %s %s", left.Type(), operator, right.Type()))
 }
 
@@ -560,53 +576,6 @@ func (s *ZmolState) evalIterStatement(node *ast.IterStatement) val.ZValue {
 	}
 
 	return val.NULL()
-}
-func (s *ZmolState) mapList(list val.ZValue, fn val.ZValue) val.ZValue {
-	if isErr(list) {
-		return list
-	}
-	var result []val.ZValue
-	for _, item := range list.(*val.ZList).Elements {
-		switch fn.Type() {
-		case val.ZNATIVE:
-			result = append(result, fn.(*val.ZNativeFunc).Fn(item))
-		case val.ZFUNCTION:
-			zState := NewZmolState(s.Env)
-			zState.Env.Set(fn.(*val.ZFunction).Params[0].Value, item)
-			evaluated := zState.EvalProgram(fn.(*val.ZFunction).Body)
-			if isErr(evaluated) {
-				return evaluated
-			}
-			result = append(result, evaluated)
-		}
-	}
-	return &val.ZList{Elements: result}
-}
-
-func (s *ZmolState) filterList(list val.ZValue, fn val.ZValue) val.ZValue {
-	if isErr(list) {
-		return list
-	}
-	var result []val.ZValue
-	for _, item := range list.(*val.ZList).Elements {
-		switch fn.Type() {
-		case val.ZNATIVE:
-			if fn.(*val.ZNativeFunc).Fn(item).(*val.ZBool).Value {
-				result = append(result, item)
-			}
-		case val.ZFUNCTION:
-			zState := NewZmolState(s.Env)
-			zState.Env.Set(fn.(*val.ZFunction).Params[0].Value, item)
-			evaluated := zState.EvalProgram(fn.(*val.ZFunction).Body)
-			if isErr(evaluated) {
-				return evaluated
-			}
-			if evaluated.(*val.ZBool).Value {
-				result = append(result, item)
-			}
-		}
-	}
-	return &val.ZList{Elements: result}
 }
 
 func (s *ZmolState) evalListConcatExpression(left, right val.ZValue) val.ZValue {

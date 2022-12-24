@@ -5,6 +5,10 @@ type ZString struct {
 	Value string
 }
 
+func STRING(value string) *ZString {
+	return &ZString{Value: value}
+}
+
 func (z *ZString) Type() ZValueType { return ZSTRING }
 func (z *ZString) Str() string      { return "\"" + z.Value + "\"" }
 func (z *ZString) Equals(other ZValue) ZValue {

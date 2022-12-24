@@ -3,6 +3,7 @@ package native
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/eval"
 	"github.com/ariaghora/zmol/pkg/val"
@@ -88,10 +89,20 @@ func Z_int(args ...val.ZValue) val.ZValue {
 		return &val.ZError{Message: "int takes 1 argument"}
 	}
 
-	n, err := EnsureInt(args[0])
-	if err != nil {
-		return &val.ZError{Message: "int takes an integer as argument"}
+	switch args[0].Type() {
+	case val.ZINT:
+		return args[0]
+	case val.ZFLOAT:
+		return val.INT(int64(args[0].(*val.ZFloat).Value))
+	case val.ZSTRING:
+		strval := args[0].(*val.ZString).Value
+		res, err := strconv.ParseInt(strval, 10, 64)
+		if err != nil {
+			eval.RuntimeErrorf("cannot convert string \"" + strval + "\" to int")
+		}
+		return val.INT(res)
+	default:
+		eval.RuntimeErrorf("int() takes a number or string as argument")
 	}
-
-	return val.INT(n)
+	return &val.ZNull{}
 }
