@@ -12,6 +12,7 @@ const (
 	ZFUNCTION ZValueType = "Function"
 	ZNATIVE   ZValueType = "BuiltinFunction"
 	ZNULL     ZValueType = "Null"
+	ZMODULE   ZValueType = "Module"
 )
 
 type Env struct {
@@ -36,8 +37,27 @@ func (e *Env) Set(name string, val ZValue) ZValue {
 type ZValue interface {
 	Type() ZValueType
 	Str() string
+}
+
+type ZComparable interface {
+	ZValue
+
 	Equals(other ZValue) ZValue
 	NotEquals(other ZValue) ZValue
 	LessThanEquals(other ZValue) ZValue
 	GreaterThanEquals(other ZValue) ZValue
+}
+
+type ZArithOperand interface {
+	ZValue
+	Add(other ZValue) ZValue
+	Sub(other ZValue) ZValue
+	Mul(other ZValue) ZValue
+	Div(other ZValue) ZValue
+	Mod(other ZValue) ZValue
+}
+
+type ZDotAccessable interface {
+	ZValue
+	DotAccess(name string) ZValue
 }

@@ -136,6 +136,19 @@ func (ie *IndexExpression) Str() string {
 	return "(" + ie.Left.Str() + "[" + ie.Index.Str() + "])"
 }
 
+type MemberAccessExpression struct {
+	Token  lexer.ZTok // the '.' token
+	Left   Expression
+	Right  Expression
+	Member *Identifier
+}
+
+func (mae *MemberAccessExpression) expressionNode() {}
+func (mae *MemberAccessExpression) Literal() string { return mae.Token.Text }
+func (mae *MemberAccessExpression) Str() string {
+	return "(" + mae.Left.Str() + "." + mae.Right.Str() + ")"
+}
+
 type InfixExpression struct {
 	Token    lexer.ZTok // the operator token, e.g. +
 	Left     Expression

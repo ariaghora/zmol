@@ -53,7 +53,9 @@ func printBanner() {
 
 func main() {
 	z := NewZmol()
-	native.RegisterNativeFunc(z.state)
+
+	nativeFuncRegistry := native.NewNativeFuncRegistry(z.state)
+	nativeFuncRegistry.RegisterNativeFunc()
 
 	if len(os.Args) > 1 {
 		fileName := os.Args[1]

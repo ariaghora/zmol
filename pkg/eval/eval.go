@@ -97,6 +97,8 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 		return s.evalListLiteral(node)
 	case *ast.IndexExpression:
 		return s.evalIndexExpression(node)
+	case *ast.MemberAccessExpression:
+		return s.evalMemberAccessExpression(node)
 	case *ast.FuncLiteral:
 		params := node.Parameters
 		body := node.Body
@@ -160,6 +162,30 @@ func (s *ZmolState) evalIndexExpression(ie *ast.IndexExpression) val.ZValue {
 	}
 }
 
+func (s *ZmolState) evalMemberAccessExpression(mae *ast.MemberAccessExpression) val.ZValue {
+	left := s.EvalProgram(mae.Left)
+
+	// check if left is a dot accessable type
+	leftAccessable, ok := left.(val.ZDotAccessable)
+	if !ok {
+		return val.ERROR("cannot perform member access on " + string(left.Type()) + " type")
+	}
+
+	// check if right is an identifier
+	right := mae.Member
+
+	// check if right node is an identifier
+	if right.Token.Type != lexer.TokIdent {
+		return val.ERROR("cannot perform member access on " + string(right.Token.Type) + " type")
+	}
+
+	if left.Type() != val.ZMODULE {
+		return val.ERROR("invalid member access on " + string(left.Type()) + " type")
+	}
+
+	return leftAccessable.DotAccess(right.Value)
+}
+
 func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) val.ZValue {
 	listVal := list.(*val.ZList)
 	indexVal := index.(*val.ZInt)
@@ -212,19 +238,29 @@ func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue 
 	left := s.EvalProgram(node.Left)
 	right := s.EvalProgram(node.Right)
 
+	leftComparable, ok := left.(val.ZComparable)
+	if !ok {
+		return val.ERROR(fmt.Sprintf("cannot compare %s to %s with `%s` operator", left.Type(), right.Type(), node.Operator))
+	}
+
+	rightComparable, ok := right.(val.ZComparable)
+	if !ok {
+		return val.ERROR(fmt.Sprintf("cannot compare %s to %s with `%s` operator", left.Type(), right.Type(), node.Operator))
+	}
+
 	switch node.Operator {
 	case "==":
-		return left.Equals(right)
+		return leftComparable.Equals(rightComparable)
 	case "!=":
-		return left.NotEquals(right)
+		return leftComparable.NotEquals(rightComparable)
 	// case "<":
-	// 	return &val.ZBool{Value: left.LessThan(right)}
+	// 	return &val.ZBool{Value: leftComparable.LessThan(right)}
 	// case ">":
-	// 	return &val.ZBool{Value: left.GreaterThan(right)}
+	// 	return &val.ZBool{Value: leftComparable.GreaterThan(right)}
 	case "<=":
-		return left.LessThanEquals(right)
+		return leftComparable.LessThanEquals(rightComparable)
 	case ">=":
-		return left.GreaterThanEquals(right)
+		return leftComparable.GreaterThanEquals(rightComparable)
 	}
 	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }

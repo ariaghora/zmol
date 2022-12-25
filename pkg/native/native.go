@@ -10,30 +10,43 @@ import (
 	"github.com/ariaghora/zmol/pkg/val"
 )
 
-func RegisterNativeFunc(zState *eval.ZmolState) {
+type NativeFuncRegistry struct {
+	zState *eval.ZmolState
+}
+
+func NewNativeFuncRegistry(zState *eval.ZmolState) *NativeFuncRegistry {
+	return &NativeFuncRegistry{
+		zState: zState,
+	}
+}
+
+func (reg *NativeFuncRegistry) RegisterNativeFunc() {
+	// Constructs
+	reg.zState.Env.Set("import", &val.ZNativeFunc{Fn: reg.Z_import})
+	reg.zState.Env.Set("print", &val.ZNativeFunc{Fn: Z_print})
+	reg.zState.Env.Set("println", &val.ZNativeFunc{Fn: Z_println})
+	reg.zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
+
 	// IO
-	zState.Env.Set("print", &val.ZNativeFunc{Fn: Z_print})
-	zState.Env.Set("println", &val.ZNativeFunc{Fn: Z_println})
-	zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
-	zState.Env.Set("read_string_file", &val.ZNativeFunc{Fn: Z_read_string_file})
+	reg.zState.Env.Set("read_string_file", &val.ZNativeFunc{Fn: Z_read_string_file})
 
 	// itertools
-	zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
-	zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
-	zState.Env.Set("len", &val.ZNativeFunc{Fn: Z_len})
-	zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
-	zState.Env.Set("reverse", &val.ZNativeFunc{Fn: Z_reverse})
-	zState.Env.Set("zip", &val.ZNativeFunc{Fn: Z_zip})
+	reg.zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
+	reg.zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
+	reg.zState.Env.Set("len", &val.ZNativeFunc{Fn: Z_len})
+	reg.zState.Env.Set("reduce", &val.ZNativeFunc{Fn: Z_reduce})
+	reg.zState.Env.Set("reverse", &val.ZNativeFunc{Fn: Z_reverse})
+	reg.zState.Env.Set("zip", &val.ZNativeFunc{Fn: Z_zip})
 
 	// math
-	zState.Env.Set("sqrt", &val.ZNativeFunc{Fn: Z_sqrt})
+	reg.zState.Env.Set("sqrt", &val.ZNativeFunc{Fn: Z_sqrt})
 
 	// string manipulation
-	zState.Env.Set("split", &val.ZNativeFunc{Fn: Z_split})
+	reg.zState.Env.Set("split", &val.ZNativeFunc{Fn: Z_split})
 
 	// type conversion
-	zState.Env.Set("int", &val.ZNativeFunc{Fn: Z_int})
-	zState.Env.Set("float", &val.ZNativeFunc{Fn: Z_float})
+	reg.zState.Env.Set("int", &val.ZNativeFunc{Fn: Z_int})
+	reg.zState.Env.Set("float", &val.ZNativeFunc{Fn: Z_float})
 }
 
 func EnsureFloat(n val.ZValue) (float64, error) {
@@ -53,6 +66,31 @@ func EnsureInt(n val.ZValue) (int64, error) {
 		return int64(n.(*val.ZFloat).Value), nil
 	}
 	return 0, errors.New("not an integer")
+}
+
+func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
+	if len(args) != 1 {
+		return &val.ZError{Message: "import takes 1 argument"}
+	}
+
+	if args[0].Type() != val.ZSTRING {
+		return &val.ZError{Message: "import takes 1 string"}
+	}
+
+	filePath := args[0].(*val.ZString).Value
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return &val.ZError{Message: "cannot read or load module \"" + filePath + "\""}
+	}
+
+	zState := eval.NewZmolState(reg.zState.Env)
+	NewNativeFuncRegistry(zState).RegisterNativeFunc()
+	zState.Eval(string(content))
+
+	return &val.ZModule{
+		ModulePath: args[0].(*val.ZString).Value,
+		Env:        zState.Env,
+	}
 }
 
 func Z_print(args ...val.ZValue) val.ZValue {

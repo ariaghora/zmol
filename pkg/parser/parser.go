@@ -14,18 +14,18 @@ import (
 const (
 	_ int = iota
 	PrecLowest
-	PrecAssign   // 2: =
-	PrecTernary  // 2: ?:
-	PrecPipeline // 2: |> >-
-	PrecOr       // 3: ||
-	PrecAnd      // 4: &&
-	PrecEquals   // 8: ==
-	PrecGtLt     // 9: > or <
-	PrecAddSub   // 11: +
-	PrecProd     // 12: *
-	PrecPrefix   // 14: -X or !X
-	PrecCall     // 17: myFunction(X)
-	PrecIndex    // 18: array[index]
+	PrecAssign       // 2: =
+	PrecTernary      // 2: ?:
+	PrecPipeline     // 2: |> >-
+	PrecOr           // 3: ||
+	PrecAnd          // 4: &&
+	PrecEquals       // 8: ==
+	PrecGtLt         // 9: > or <
+	PrecAddSub       // 11: +
+	PrecProd         // 12: *
+	PrecPrefix       // 14: -X or !X
+	PrecCall         // 17: myFunction(X)
+	PrecMemberAccess // 18: array[index] or value.field
 )
 
 var precedences = map[lexer.TokType]int{
@@ -56,8 +56,9 @@ var precedences = map[lexer.TokType]int{
 	lexer.TokMod:    PrecProd,
 	lexer.TokLParen: PrecCall,
 
-	// Index operator
-	lexer.TokLBrac: PrecIndex,
+	// Member access operator
+	lexer.TokLBrac: PrecMemberAccess,
+	lexer.TokDot:   PrecMemberAccess,
 
 	// Ternary operator
 	lexer.TokQuestion: PrecTernary,
@@ -134,8 +135,9 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerInfix(lexer.TokGt, p.parseInfixExpression)
 	p.registerInfix(lexer.TokGTE, p.parseInfixExpression)
 
-	// List access
+	// Member access
 	p.registerInfix(lexer.TokLBrac, p.parseIndexExpression)
+	p.registerInfix(lexer.TokDot, p.parseMemberAccessExpression)
 
 	p.registerInfix(lexer.TokLParen, p.parseCallExpression)
 	p.registerInfix(lexer.TokQuestion, p.parserTernaryExpression)
@@ -160,7 +162,7 @@ func (p *Parser) ParseProgram() (*ast.Program, error) {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for p.curTok.Type != lexer.TokEOF || !p.shouldStop {
+	for p.curTok.Type != lexer.TokEOF && !p.shouldStop {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -555,6 +557,18 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	if !p.expectPeek(lexer.TokRBrac) {
 		return nil
 	}
+
+	return exp
+}
+
+func (p *Parser) parseMemberAccessExpression(left ast.Expression) ast.Expression {
+	exp := &ast.MemberAccessExpression{
+		Token: p.curTok,
+		Left:  left,
+	}
+
+	p.nextToken()
+	exp.Member = &ast.Identifier{Token: p.curTok, Value: p.curTok.Text}
 
 	return exp
 }
