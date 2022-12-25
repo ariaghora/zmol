@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/ariaghora/zmol/pkg/ast"
 	"github.com/ariaghora/zmol/pkg/lexer"
@@ -75,12 +77,15 @@ type Parser struct {
 	infixParseFns  map[lexer.TokType]infixParseFn
 	prefixParseFns map[lexer.TokType]prefixParseFn
 	errors         []string
+
+	shouldStop bool
 }
 
 func NewParser(l *lexer.ZLex) *Parser {
 	p := &Parser{
-		l:      l,
-		tokIdx: 0,
+		l:          l,
+		tokIdx:     0,
+		shouldStop: false,
 	}
 
 	// Initialize the parser with the first two tokens,
@@ -151,18 +156,24 @@ func (p *Parser) nextToken() {
 	p.peekTok = p.l.Tokens[p.tokIdx]
 }
 
-func (p *Parser) ParseProgram() *ast.Program {
+func (p *Parser) ParseProgram() (*ast.Program, error) {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for p.curTok.Type != lexer.TokEOF {
+	for p.curTok.Type != lexer.TokEOF || !p.shouldStop {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
 	}
-	return program
+
+	if p.shouldStop {
+		errMsg := strings.Join(p.errors, "\n")
+		return nil, errors.New(errMsg)
+	}
+
+	return program, nil
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -300,6 +311,7 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 func (p *Parser) noPrefixParseFnError(t lexer.TokType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
+	p.shouldStop = true
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
@@ -311,8 +323,10 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	value, err := strconv.ParseInt(p.curTok.Text, 0, 64)
 	if err != nil {
-		msg := "Could not parse %q as integer"
+		msg := "Could not parse %q as integer, at line %d, column %d"
+		msg = fmt.Sprintf(msg, p.curTok.Text, p.curTok.Row+1, p.curTok.Col+1)
 		p.errors = append(p.errors, msg)
+		p.shouldStop = true
 		return nil
 	}
 
@@ -327,6 +341,7 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 	if err != nil {
 		msg := "Could not parse %q as float"
 		p.errors = append(p.errors, msg)
+		p.shouldStop = true
 		return nil
 	}
 
@@ -556,7 +571,6 @@ func (p *Parser) parsePipelineExpression(list ast.Expression) ast.Expression {
 	exp.FuncLiteral = p.parseExpression(PrecLowest)
 
 	if !p.expectPeek(lexer.TokLCurl) {
-		// fmt.Println("Current token: ", p.curTok)
 		return nil
 	}
 
@@ -567,7 +581,10 @@ func (p *Parser) parsePipelineExpression(list ast.Expression) ast.Expression {
 
 func (p *Parser) peekError(t lexer.TokType) {
 	msg := "Expected next token to be %s, got %s instead"
-	p.errors = append(p.errors, fmt.Sprintf(msg, t, p.peekTok.Type))
+	msg += " at line %d, column %d"
+	p.errors = append(p.errors, fmt.Sprintf(msg, t, p.peekTok.Type, p.peekTok.Row+1, p.peekTok.Col+1))
+
+	p.shouldStop = true
 }
 
 func (p *Parser) expectPeek(t lexer.TokType) bool {

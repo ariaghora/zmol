@@ -34,7 +34,10 @@ func (s *ZmolState) Eval(source string) (val.ZValue, error) {
 	}
 
 	p := parser.NewParser(l)
-	program := p.ParseProgram()
+	program, err := p.ParseProgram()
+	if err != nil {
+		return nil, err
+	}
 	if len(p.Errors()) != 0 {
 		s.printParserErrors(os.Stderr, p.Errors())
 		return val.ERROR("Parser errors"), errors.New("parser errors")

@@ -18,7 +18,7 @@ func TestSimpleVarAssign(t *testing.T) {
 	}
 
 	parser := NewParser(lexer)
-	program := parser.ParseProgram()
+	program, _ := parser.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -53,7 +53,7 @@ func TestVarAssign(t *testing.T) {
 	}
 
 	parser := NewParser(lexer)
-	program := parser.ParseProgram()
+	program, _ := parser.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -91,7 +91,7 @@ func TestIdentifier(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -125,7 +125,7 @@ func TestIntegerLiteral(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -171,7 +171,7 @@ func TestParseInfix(t *testing.T) {
 		}
 
 		p := NewParser(l)
-		program := p.ParseProgram()
+		program, _ := p.ParseProgram()
 
 		if program == nil {
 			t.Errorf("ParseProgram() returned nil")
@@ -237,7 +237,7 @@ func TestBoolInfix(t *testing.T) {
 		}
 
 		p := NewParser(l)
-		program := p.ParseProgram()
+		program, _ := p.ParseProgram()
 
 		if program == nil {
 			t.Errorf("ParseProgram() returned nil")
@@ -287,7 +287,7 @@ func TestParseFuncLiteral(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -351,7 +351,7 @@ func TestParseFuncLiteralMultiline(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -440,7 +440,7 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -488,7 +488,7 @@ func TestParseFunctionCall(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -535,7 +535,7 @@ func TestParseTernary(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
@@ -578,7 +578,7 @@ func TestParseList(t *testing.T) {
 	}
 
 	p := NewParser(l)
-	program := p.ParseProgram()
+	program, _ := p.ParseProgram()
 
 	if program == nil {
 		t.Errorf("ParseProgram() returned nil")
