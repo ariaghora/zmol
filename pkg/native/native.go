@@ -77,20 +77,17 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return &val.ZError{Message: "import takes 1 string"}
 	}
 
-	filePath := args[0].(*val.ZString).Value
-	content, err := ioutil.ReadFile(filePath)
+	modulePath := args[0].(*val.ZString).Value
+	content, err := ioutil.ReadFile(modulePath)
 	if err != nil {
-		return &val.ZError{Message: "cannot read or load module \"" + filePath + "\""}
+		return &val.ZError{Message: "cannot read or load module \"" + modulePath + "\""}
 	}
 
-	zState := eval.NewZmolState(reg.zState.Env)
+	zState := eval.NewZmolState(nil)
 	NewNativeFuncRegistry(zState).RegisterNativeFunc()
 	zState.Eval(string(content))
 
-	return &val.ZModule{
-		ModulePath: args[0].(*val.ZString).Value,
-		Env:        zState.Env,
-	}
+	return val.MODULE(modulePath, zState.Env)
 }
 
 func Z_print(args ...val.ZValue) val.ZValue {
@@ -102,8 +99,9 @@ func Z_print(args ...val.ZValue) val.ZValue {
 
 func Z_println(args ...val.ZValue) val.ZValue {
 	for _, arg := range args {
-		fmt.Println(arg.Str())
+		fmt.Print(arg.Str())
 	}
+	fmt.Println()
 	return &val.ZNull{}
 }
 

@@ -3,16 +3,17 @@ package val
 type ZValueType string
 
 const (
-	ZINT      ZValueType = "Int"
-	ZFLOAT    ZValueType = "Float"
-	ZBOOL     ZValueType = "Bool"
-	ZLIST     ZValueType = "List"
-	ZERROR    ZValueType = "Error"
-	ZSTRING   ZValueType = "String"
-	ZFUNCTION ZValueType = "Function"
-	ZNATIVE   ZValueType = "BuiltinFunction"
-	ZNULL     ZValueType = "Null"
-	ZMODULE   ZValueType = "Module"
+	ZINT        ZValueType = "Int"
+	ZFLOAT      ZValueType = "Float"
+	ZBOOL       ZValueType = "Bool"
+	ZLIST       ZValueType = "List"
+	ZERROR      ZValueType = "Error"
+	ZSTRING     ZValueType = "String"
+	ZFUNCTION   ZValueType = "Function"
+	ZNATIVE     ZValueType = "BuiltinFunction"
+	ZNULL       ZValueType = "Null"
+	ZMODULE     ZValueType = "Module"
+	ZMODULEFUNC ZValueType = "ModuleFunction"
 )
 
 type Env struct {
@@ -60,4 +61,5 @@ type ZArithOperand interface {
 type ZDotAccessable interface {
 	ZValue
 	DotAccess(name string) ZValue
+	Env() *Env
 }

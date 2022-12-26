@@ -183,7 +183,17 @@ func (s *ZmolState) evalMemberAccessExpression(mae *ast.MemberAccessExpression) 
 		return val.ERROR("invalid member access on " + string(left.Type()) + " type")
 	}
 
-	return leftAccessable.DotAccess(right.Value)
+	accessedValue := leftAccessable.DotAccess(right.Value)
+	// if it is a function, wrap it as a module function
+	if accessedValue.Type() == val.ZFUNCTION {
+		return &val.ZModuleFunc{
+			Func: accessedValue.(*val.ZFunction),
+			Env:  leftAccessable.Env(),
+		}
+	} else {
+		return accessedValue
+	}
+	// return leftAccessable.DotAccess(right.Value)
 }
 
 func (s *ZmolState) evalListIndexExpression(list val.ZValue, index val.ZValue) val.ZValue {
@@ -325,7 +335,7 @@ func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
 		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params), len(args))
 	}
 
-	zState := NewZmolState(fn.Env)
+	zState := NewZmolState(s.Env)
 
 	for i, param := range fn.Params {
 		zState.Env.Set(param.Value, args[i])
@@ -372,7 +382,7 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 
 	//// Case 2: User-defined function
 	udFunc := fn.(*val.ZFunction)
-	zState := NewZmolState(udFunc.Env)
+	zState := NewZmolState(s.Env)
 	if len(args) != len(udFunc.Params) {
 		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params), len(args))
 	}
@@ -575,25 +585,48 @@ func (s *ZmolState) evalExpressions(exps []ast.Expression) []val.ZValue {
 }
 
 func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
-	function := s.EvalProgram(node.Function)
-	if isErr(function) {
-		return function
+	lEval := s.EvalProgram(node.Function)
+	if isErr(lEval) {
+		return lEval
 	}
 	args := s.evalExpressions(node.Arguments)
-	if function.Type() == val.ZNATIVE {
-		return function.(*val.ZNativeFunc).Fn(args...)
+
+	if lEval.Type() == val.ZNATIVE {
+		return lEval.(*val.ZNativeFunc).Fn(args...)
+	} else if lEval.Type() == val.ZMODULEFUNC {
+		function := lEval
+		params := function.(*val.ZModuleFunc).Func.Params
+		if len(args) == 1 && isErr(args[0]) {
+			return args[0]
+		}
+		zState := NewZmolState(function.(*val.ZModuleFunc).Env)
+		for i, arg := range args {
+			if isErr(arg) {
+				return arg
+			}
+			zState.Env.Set(params[i].Value, arg)
+		}
+		evaluated := zState.EvalProgram(function.(*val.ZModuleFunc).Func.Body)
+		return evaluated
+	} else {
+		function := s.EvalProgram(node.Function)
+		if isErr(function) {
+			return function
+		}
+
+		env := s.Env
+		params := function.(*val.ZFunction).Params
+		zState := NewZmolState(env)
+		for i, arg := range args {
+			if isErr(arg) {
+				return arg
+			}
+			zState.Env.Set(params[i].Value, arg)
+		}
+		evaluated := zState.EvalProgram(function.(*val.ZFunction).Body)
+		return evaluated
 	}
 
-	params := function.(*val.ZFunction).Params
-	zState := NewZmolState(s.Env)
-	for i, arg := range args {
-		if isErr(arg) {
-			return arg
-		}
-		zState.Env.Set(params[i].Value, arg)
-	}
-	evaluated := zState.EvalProgram(function.(*val.ZFunction).Body)
-	return evaluated
 }
 
 func (s *ZmolState) evalTernaryExpression(node *ast.TernaryExpression) val.ZValue {
