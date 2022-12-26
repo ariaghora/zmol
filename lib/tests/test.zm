@@ -1,4 +1,0 @@
-module tests:
-    @assert(boolexp, message):
-    end
-end
