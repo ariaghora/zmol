@@ -160,6 +160,8 @@ func (z *ZLex) addString() {
 			if z.i+nChar+1 >= len(z.code) {
 				panic(errors.New("invalid escape sequence"))
 			}
+
+			// TODO: handle more escape sequences
 			switch z.code[z.i+nChar+1] {
 			case 'r':
 				fmt.Println("the string contains \\r, which cannot be parsed properly yet")
@@ -168,6 +170,8 @@ func (z *ZLex) addString() {
 				out += "\n"
 			case 't':
 				out += "\t"
+			case '\\':
+				out += "\\"
 			}
 			nChar += 2
 		} else {

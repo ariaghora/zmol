@@ -325,7 +325,7 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 	case lexer.TokMap:
 		return s.applyMap(function, args)
 	case lexer.TokFilter:
-		RuntimeErrorf("Filter pipeline not implemented yet")
+		return s.applyFilter(function, args)
 	}
 
 	msg := fmt.Sprintf("Unknown pipeline operator: %s", node.Token.Text)
@@ -411,6 +411,82 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 			}
 			evaluated := zState.EvalProgram(udFunc.Body)
 			newList.Elements = append(newList.Elements, evaluated)
+		}
+	}
+
+	return newList
+}
+
+func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
+	list := args[0]
+	extraArgs := []val.ZValue{}
+	if len(args) > 1 {
+		extraArgs = args[1:]
+	}
+
+	// error if the list is not a list or string
+	if list.Type() != val.ZLIST && list.Type() != val.ZSTRING {
+		RuntimeErrorf("Left side of pipeline must be iterable")
+	}
+
+	//// Case 1: Native function
+	if fn.Type() == val.ZNATIVE {
+		newList := &val.ZList{Elements: []val.ZValue{}}
+		switch list.Type() {
+		case val.ZSTRING:
+			for _, elem := range list.(*val.ZString).Value {
+				finalArgs := []val.ZValue{&val.ZString{Value: string(elem)}}
+				finalArgs = append(finalArgs, extraArgs...)
+				if fn.(*val.ZNativeFunc).Fn(finalArgs...).(*val.ZBool).Value {
+					newList.Elements = append(newList.Elements, &val.ZString{Value: string(elem)})
+				}
+			}
+
+		case val.ZLIST:
+			for _, elem := range list.(*val.ZList).Elements {
+				finalArgs := []val.ZValue{elem}
+				finalArgs = append(finalArgs, extraArgs...)
+				if fn.(*val.ZNativeFunc).Fn(finalArgs...).(*val.ZBool).Value {
+					newList.Elements = append(newList.Elements, elem)
+				}
+			}
+		}
+
+		return newList
+	}
+
+	//// Case 2: User-defined function
+	udFunc := fn.(*val.ZFunction)
+	zState := NewZmolState(s.Env)
+	if len(args) != len(udFunc.Params) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params), len(args))
+	}
+
+	// Evaluate the function for each element in the list
+	newList := &val.ZList{Elements: []val.ZValue{}}
+	switch list.Type() {
+	case val.ZSTRING:
+		for _, elem := range list.(*val.ZString).Value {
+			zState.Env.Set(udFunc.Params[0].Value, &val.ZString{Value: string(elem)})
+			for i, param := range udFunc.Params[1:] {
+				zState.Env.Set(param.Value, args[i+1])
+			}
+			evaluated := zState.EvalProgram(udFunc.Body)
+			if evaluated.(*val.ZBool).Value {
+				newList.Elements = append(newList.Elements, &val.ZString{Value: string(elem)})
+			}
+
+		}
+	case val.ZLIST:
+		for _, elem := range list.(*val.ZList).Elements {
+			zState.Env.Set(udFunc.Params[0].Value, elem)
+			for i, param := range udFunc.Params[1:] {
+				zState.Env.Set(param.Value, args[i+1])
+			}
+			evaluated := zState.EvalProgram(udFunc.Body)
+			if evaluated.(*val.ZBool).Value {
+				newList.Elements = append(newList.Elements, elem)
+			}
 		}
 	}
 
