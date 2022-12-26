@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/eval"
@@ -77,15 +79,29 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return &val.ZError{Message: "import takes 1 string"}
 	}
 
+	// FIXME: handle !ok
+	dir, _ := reg.zState.Env.Get("__moddir__")
+
 	modulePath := args[0].(*val.ZString).Value
+	modulePath = path.Join(dir.Str(), modulePath)
+
+	// TODO: Check duplicate import
+
 	content, err := ioutil.ReadFile(modulePath)
 	if err != nil {
+		eval.RuntimeErrorf("cannot read file " + modulePath)
 		return &val.ZError{Message: "cannot read or load module \"" + modulePath + "\""}
 	}
 
 	zState := eval.NewZmolState(nil)
+	moduleDir := filepath.Dir(modulePath)
+	zState.Env.Set("__moddir__", &val.ZString{Value: moduleDir})
 	NewNativeFuncRegistry(zState).RegisterNativeFunc()
-	zState.Eval(string(content))
+
+	_, err = zState.Eval(string(content))
+	if err != nil {
+		eval.RuntimeErrorf("cannot eval module " + modulePath)
+	}
 
 	return val.MODULE(modulePath, zState.Env)
 }

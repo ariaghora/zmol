@@ -18,6 +18,9 @@ type ZmolState struct {
 
 func NewZmolState(ParentEnv *val.Env) *ZmolState {
 	symTable := make(map[string]val.ZValue)
+	// default __moddir__ is the current working directory unless
+	// the script is imported as a module
+	symTable["__moddir__"] = val.STRING(".")
 	return &ZmolState{
 		Env: &val.Env{
 			SymTable:  symTable,
