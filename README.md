@@ -1,7 +1,7 @@
 # Zmol
 
 <p align="center">
-    <img src="zmol.png" width=250px/>
+    <img src="assets/zmol.png" width=250px/>
 </p>
 A toy language that aims to be:
 
@@ -13,19 +13,4 @@ A toy language that aims to be:
 
 Refer to the [docs](docs.md) for more information.
 
-The Euler Project problem 1 solution in Zmol:
-
-```
-sum = @(list) { 
-    add = @(x, y){ x + y }
-    reduce(list, add, 0) 
-}
-divisible = @(x) { (x % 3 == 0) || (x % 5 == 0) }
-
-range_list(1, 1000) >- divisible |> sum |> print
-```
-
-output:
-```
-233168
-```
+![screenshot](assets/screenshot.png)
