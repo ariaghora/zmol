@@ -266,10 +266,10 @@ func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue 
 		return leftComparable.Equals(rightComparable)
 	case "!=":
 		return leftComparable.NotEquals(rightComparable)
-	// case "<":
-	// 	return &val.ZBool{Value: leftComparable.LessThan(right)}
-	// case ">":
-	// 	return &val.ZBool{Value: leftComparable.GreaterThan(right)}
+	case "<":
+		return leftComparable.LessThan(rightComparable)
+	case ">":
+		return leftComparable.GreaterThan(rightComparable)
 	case "<=":
 		return leftComparable.LessThanEquals(rightComparable)
 	case ">=":

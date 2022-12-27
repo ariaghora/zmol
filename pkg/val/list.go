@@ -32,6 +32,14 @@ func (zl *ZList) NotEquals(other ZValue) ZValue {
 	return ERROR("Operator '!=' not defined for list")
 }
 
+func (zl *ZList) LessThan(other ZValue) ZValue {
+	return ERROR("Operator '<' not defined for list")
+}
+
+func (zl *ZList) GreaterThan(other ZValue) ZValue {
+	return ERROR("Operator '>' not defined for list")
+}
+
 func (zl *ZList) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for list")
 }

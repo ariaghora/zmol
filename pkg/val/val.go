@@ -45,6 +45,8 @@ type ZComparable interface {
 
 	Equals(other ZValue) ZValue
 	NotEquals(other ZValue) ZValue
+	LessThan(other ZValue) ZValue
+	GreaterThan(other ZValue) ZValue
 	LessThanEquals(other ZValue) ZValue
 	GreaterThanEquals(other ZValue) ZValue
 }

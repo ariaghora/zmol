@@ -23,6 +23,15 @@ func (z *ZString) NotEquals(other ZValue) ZValue {
 	}
 	return BOOL(z.Value != other.(*ZString).Value)
 }
+
+func (z *ZString) LessThan(other ZValue) ZValue {
+	return ERROR("Operator '<' not defined for string")
+}
+
+func (z *ZString) GreaterThan(other ZValue) ZValue {
+	return ERROR("Operator '>' not defined for string")
+}
+
 func (z *ZString) LessThanEquals(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for string")
 }
