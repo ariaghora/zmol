@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/ariaghora/zmol/pkg/eval"
+	"github.com/ariaghora/zmol/pkg/native/goplugin"
 	"github.com/ariaghora/zmol/pkg/native/std"
 	"github.com/ariaghora/zmol/pkg/val"
 )
@@ -56,10 +57,12 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 
 	// Try import std lib
 	switch args[0].(*val.ZString).Value {
-	case "math":
-		return std.MathModule
+	case "goplugin":
+		return goplugin.GoPluginModule
 	case "io":
 		return std.IOModule
+	case "math":
+		return std.MathModule
 	}
 
 	// FIXME: handle !ok
