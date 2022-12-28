@@ -105,9 +105,13 @@ func NewParser(l *lexer.ZLex) *Parser {
 	p.registerPrefix(lexer.TokFalse, p.parseBooleanLiteral)
 	p.registerPrefix(lexer.TokPlus, p.parserPrefixExpression)
 	p.registerPrefix(lexer.TokMinus, p.parserPrefixExpression)
-	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
 	p.registerPrefix(lexer.TokLParen, p.parseGroupedExpression)
 	p.registerPrefix(lexer.TokLBrac, p.parseListLiteral)
+
+	// Function literal can be triggered by @ or fn.
+	// TODO: fn seems better and I'm considering to remove @ in the future.
+	p.registerPrefix(lexer.TokAt, p.parseFuncLiteral)
+	p.registerPrefix(lexer.TokFn, p.parseFuncLiteral)
 
 	////
 	//// Infix parse functions registration
@@ -180,8 +184,6 @@ func (p *Parser) ParseProgram() (*ast.Program, error) {
 
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curTok.Type {
-	case lexer.TokLet:
-		return p.parseVarAssign()
 	case lexer.TokIf:
 		return p.parseIfStatement()
 	case lexer.TokIter:
@@ -189,30 +191,6 @@ func (p *Parser) parseStatement() ast.Statement {
 	default:
 		return p.parseExpressionStatement()
 	}
-}
-
-func (p *Parser) parseVarAssign() *ast.VarrAssignmentStatement {
-	statement := &ast.VarrAssignmentStatement{Token: p.curTok}
-
-	if !p.expectPeek(lexer.TokIdent) {
-		return nil
-	}
-
-	statement.Name = &ast.Identifier{Token: p.curTok, Value: p.curTok.Text}
-
-	if !p.expectPeek(lexer.TokAssign) {
-		return nil
-	}
-
-	p.nextToken()
-
-	statement.Value = p.parseExpression(PrecLowest)
-
-	if p.peekTok.Type == lexer.TokSemicolon {
-		p.nextToken()
-	}
-
-	return statement
 }
 
 func (p *Parser) parseIfStatement() *ast.IfStatement {

@@ -42,7 +42,7 @@ const (
 	TokColon             = ":"
 	TokNot               = "!"
 	TokQuestion          = "?"
-	TokLet               = "let"
+	TokFn                = "fn"
 	TokEOF               = "EOF"
 	TokIdent             = "IDENT"
 	TokIf                = "if"
@@ -83,7 +83,7 @@ var SingularTokOps = map[rune]TokType{
 }
 
 var KeywordTok = map[string]TokType{
-	"let":   TokLet,
+	"fn":    TokFn,
 	"if":    TokIf,
 	"else":  TokElse,
 	"true":  TokTrue,
