@@ -9,6 +9,7 @@ import (
 	"github.com/ariaghora/zmol/pkg/lexer"
 	"github.com/ariaghora/zmol/pkg/parser"
 	"github.com/ariaghora/zmol/pkg/val"
+
 	"github.com/fatih/color"
 )
 
@@ -182,10 +183,6 @@ func (s *ZmolState) evalMemberAccessExpression(mae *ast.MemberAccessExpression) 
 		return val.ERROR("cannot perform member access on " + string(right.Token.Type) + " type")
 	}
 
-	if left.Type() != val.ZMODULE {
-		return val.ERROR("invalid member access on " + string(left.Type()) + " type")
-	}
-
 	accessedValue := leftAccessable.DotAccess(right.Value)
 	// if it is a function, wrap it as a module function
 	if accessedValue.Type() == val.ZFUNCTION {
@@ -221,6 +218,27 @@ func (s *ZmolState) evalStringIndexExpression(str val.ZValue, index val.ZValue) 
 	}
 
 	return &val.ZString{Value: string(strVal.Value[indexVal.Value])}
+}
+
+func (s *ZmolState) evalMemberAssignment(mae *ast.MemberAccessExpression, value val.ZValue) val.ZValue {
+	left := s.EvalProgram(mae.Left)
+
+	// check if left is a dot accessable type
+	leftAccessable, ok := left.(val.ZDotAccessable)
+	if !ok {
+		RuntimeErrorf("cannot perform member access on " + string(left.Type()) + " type")
+	}
+
+	// check if right is an identifier
+	right := mae.Member
+
+	// check if right node is an identifier
+	if right.Token.Type != lexer.TokIdent {
+		RuntimeErrorf("identifier expected, got " + string(right.Token.Type) + " type")
+	}
+
+	leftAccessable.DotAssign(right.Value, value)
+	return val.NULL()
 }
 
 func (s *ZmolState) evalIndexAssignment(ie *ast.IndexExpression, value val.ZValue) val.ZValue {
@@ -606,12 +624,18 @@ func (s *ZmolState) evalVariableAssignment(node *ast.InfixExpression) val.ZValue
 		return value
 	}
 
-	// if left is identifier, then it's a regular variable assignment
-	if _, ok := node.Left.(*ast.Identifier); ok {
+	switch node.Left.(type) {
+	case *ast.MemberAccessExpression:
+		return s.evalMemberAssignment(node.Left.(*ast.MemberAccessExpression), value)
+	case *ast.Identifier:
+		if value.Type() == val.ZCLASS {
+			value.(*val.ZClass).Name = node.Left.(*ast.Identifier).Value
+		}
 		return s.Env.Set(node.Left.(*ast.Identifier).Value, value)
-	} else if _, ok := node.Left.(*ast.IndexExpression); ok {
+	case *ast.IndexExpression:
 		return s.evalIndexAssignment(node.Left.(*ast.IndexExpression), value)
 	}
+
 	RuntimeErrorf("invalid assignment")
 	return val.NULL()
 }
@@ -668,10 +692,12 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 	if isErr(lEval) {
 		return lEval
 	}
+
 	args := s.evalExpressions(node.Arguments)
 
 	if lEval.Type() == val.ZNATIVE {
-		return lEval.(*val.ZNativeFunc).Fn(args...)
+		function := lEval.(*val.ZNativeFunc)
+		return function.Fn(args...)
 	} else if lEval.Type() == val.ZMODULEFUNC {
 		function := lEval
 		params := function.(*val.ZModuleFunc).Func.Params
@@ -687,6 +713,42 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 		}
 		evaluated := zState.EvalProgram(function.(*val.ZModuleFunc).Func.Body)
 		return evaluated
+	} else if lEval.Type() == val.ZCLASS {
+		class := lEval.(*val.ZClass)
+		obj := val.OBJECT(class.Name, s.Env)
+
+		// Copy class attributes and methods (i.e., ZValues in the class' env)
+		// to the new object
+		for k, v := range class.Env().SymTable {
+			obj.Env().Set(k, v)
+		}
+
+		// try to call the constructor. If it doesn't exist, just return the new object
+		constructorFn, ok := obj.Env().Get("init")
+		if ok {
+			// if the constructor exists, call it
+			params := constructorFn.(*val.ZFunction).Params
+
+			if len(args) != len(params) {
+				RuntimeErrorf("wrong number of arguments for constructor. got=%d, want=%d", len(args), len(params))
+			}
+
+			zState := NewZmolState(obj.Env())
+			for i, arg := range args {
+				if isErr(arg) {
+					return arg
+				}
+				zState.Env.Set(params[i].Value, arg)
+			}
+			zState.EvalProgram(constructorFn.(*val.ZFunction).Body)
+		}
+
+		if !ok && len(args) > 0 {
+			RuntimeErrorf("wrong number of arguments for constructor. got=%d, want=0", len(args))
+		}
+
+		return obj
+
 	} else {
 		function := s.EvalProgram(node.Function)
 		if isErr(function) {

@@ -31,6 +31,10 @@ func (zm *ZModule) DotAccess(name string) ZValue {
 	return value
 }
 
+func (zm *ZModule) DotAssign(name string, value ZValue) {
+	fmt.Println("cannt assign to module")
+}
+
 func (zm *ZModule) Env() *Env {
 	return zm.env
 }

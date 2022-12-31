@@ -8,7 +8,7 @@ import (
 )
 
 func TestSimpleVarAssign(t *testing.T) {
-	source := `let a = 1
+	source := `a = 1
 	`
 
 	lexer := lexer.NewLexer(source)
@@ -30,21 +30,12 @@ func TestSimpleVarAssign(t *testing.T) {
 		}
 	}
 
-	stmt := program.Statements[0]
-	if stmt.(*ast.VarrAssignmentStatement).Name.Value != "a" {
-		t.Errorf("Expected identifier to be a, got %s", stmt.(*ast.VarrAssignmentStatement).Name.Value)
-	}
-
-	if stmt.(*ast.VarrAssignmentStatement).Value.(*ast.IntegerLiteral).Value != 1 {
-		t.Errorf("Expected value to be 1, got %d", stmt.(*ast.VarrAssignmentStatement).Value.(*ast.IntegerLiteral).Value)
-	}
-
 }
 
 func TestVarAssign(t *testing.T) {
-	source := `let a = 1
-	let b = 2
-	let c = 3 `
+	source := `a = 1
+	b = 2
+	c = 3 `
 
 	lexer := lexer.NewLexer(source)
 	err := lexer.Lex()
@@ -74,12 +65,26 @@ func TestVarAssign(t *testing.T) {
 	}
 
 	for i, tt := range tests {
+		// expression statement with = operator
 		stmt := program.Statements[i]
-		if stmt.(*ast.VarrAssignmentStatement).Name.Value != tt.expectedIdentifier {
-			t.Errorf("Expected identifier to be %s, got %s", tt.expectedIdentifier, stmt.(*ast.VarrAssignmentStatement).Name.Value)
-		}
-	}
 
+		if stmt.(*ast.ExpressionStatement).Expression.(*ast.InfixExpression).Operator != "=" {
+			t.Errorf("Expected operator to be =, got %s", stmt.(*ast.ExpressionStatement).Expression.(*ast.InfixExpression).Operator)
+		}
+
+		// left side of expression statement
+		left := stmt.(*ast.ExpressionStatement).Expression.(*ast.InfixExpression).Left
+		if left.(*ast.Identifier).Value != tt.expectedIdentifier {
+			t.Errorf("Expected identifier to be %s, got %s", tt.expectedIdentifier, left.(*ast.Identifier).Value)
+		}
+
+		// right side of expression statement
+		right := stmt.(*ast.ExpressionStatement).Expression.(*ast.InfixExpression).Right
+		if right.(*ast.IntegerLiteral).Value != int64(i+1) {
+			t.Errorf("Expected integer to be %d, got %d", i+1, right.(*ast.IntegerLiteral).Value)
+		}
+
+	}
 }
 
 func TestIdentifier(t *testing.T) {
@@ -339,8 +344,8 @@ func TestParseFuncLiteral(t *testing.T) {
 }
 
 func TestParseFuncLiteralMultiline(t *testing.T) {
-	source := `@(x, y) {
-		let z = x + y
+	source := `fn(x, y) {
+		z = x + y
 		z * 2
 	}`
 
@@ -387,50 +392,33 @@ func TestParseFuncLiteralMultiline(t *testing.T) {
 		t.Errorf("Expected 2 statements, got %d", len(function.Body.Statements))
 	}
 
-	body, ok := function.Body.Statements[0].(*ast.VarrAssignmentStatement)
+	body, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
 		t.Errorf("Expected statement to be *ast.LetStatement, got %T", function.Body.Statements[0])
 	}
 
-	if body.Name.Value != "z" {
-		t.Errorf("Expected name to be 'z', got %s", body.Name.Value)
+	if body.Expression.Str() != "(z = (x + y))" {
+		t.Errorf("Expected expression to be z = (x + y), got %s", body.Expression.Str())
 	}
 
-	infix, ok := body.Value.(*ast.InfixExpression)
+	body, ok = function.Body.Statements[1].(*ast.ExpressionStatement)
 	if !ok {
-		t.Errorf("Expected value to be *ast.InfixExpression, got %T", body.Value)
+		t.Errorf("Expected statement to be *ast.LetStatement, got %T", function.Body.Statements[1])
 	}
 
-	if infix.Operator != "+" {
-		t.Errorf("Expected operator to be '+', got %s", infix.Operator)
+	if body.Expression.Str() != "(z * 2)" {
+		t.Errorf("Expected expression to be (z * 2), got %s", body.Expression.Str())
 	}
 
-	left, ok := infix.Left.(*ast.Identifier)
-	if !ok {
-		t.Errorf("Expected left to be *ast.Identifier, got %T", infix.Left)
-	}
-
-	if left.Value != "x" {
-		t.Errorf("Expected left to be 'x', got %s", left.Value)
-	}
-
-	right, ok := infix.Right.(*ast.Identifier)
-	if !ok {
-		t.Errorf("Expected right to be *ast.Identifier, got %T", infix.Right)
-	}
-
-	if right.Value != "y" {
-		t.Errorf("Expected right to be 'y', got %s", right.Value)
-	}
 }
 
 func TestMultipleStatements(t *testing.T) {
 	source := `
-	let f = @(x, y) {
+	f = fn(x, y) {
 		x + y
 	}
 
-	let g = 100
+	g = 100
 	`
 
 	l := lexer.NewLexer(source)
@@ -450,30 +438,18 @@ func TestMultipleStatements(t *testing.T) {
 		t.Errorf("Expected 2 statements, got %d", len(program.Statements))
 	}
 
-	stmt, ok := program.Statements[0].(*ast.VarrAssignmentStatement)
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
 		t.Errorf("Expected statement to be *ast.LetStatement, got %T", program.Statements[0])
 	}
 
-	if stmt.Name.Value != "f" {
-		t.Errorf("Expected name to be 'f', got %s", stmt.Name.Value)
-	}
-
-	function, ok := stmt.Value.(*ast.FuncLiteral)
+	stmt, ok = program.Statements[1].(*ast.ExpressionStatement)
 	if !ok {
-		t.Errorf("Expected value to be *ast.FuncLiteral, got %T", stmt.Value)
+		t.Errorf("Expected statement to be *ast.LetStatement, got %T", program.Statements[1])
 	}
 
-	if len(function.Parameters) != 2 {
-		t.Errorf("Expected 2 parameters, got %d", len(function.Parameters))
-	}
-
-	if function.Parameters[0].Str() != "x" {
-		t.Errorf("Expected parameter to be 'x', got %s", function.Parameters[0].Str())
-	}
-
-	if function.Parameters[1].Str() != "y" {
-		t.Errorf("Expected parameter to be 'y', got %s", function.Parameters[1].Str())
+	if stmt.Expression.Str() != "(g = 100)" {
+		t.Errorf("Expected expression to be g = 100, got %s", stmt.Expression.Str())
 	}
 
 }

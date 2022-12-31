@@ -7,6 +7,9 @@ const (
 	ZFLOAT      ZValueType = "Float"
 	ZBOOL       ZValueType = "Bool"
 	ZLIST       ZValueType = "List"
+	ZCLASS      ZValueType = "Class"
+	ZOBJECT     ZValueType = "Object"
+	ZTENSOR     ZValueType = "Tensor"
 	ZERROR      ZValueType = "Error"
 	ZSTRING     ZValueType = "String"
 	ZFUNCTION   ZValueType = "Function"
@@ -63,5 +66,6 @@ type ZArithOperand interface {
 type ZDotAccessable interface {
 	ZValue
 	DotAccess(name string) ZValue
+	DotAssign(name string, value ZValue)
 	Env() *Env
 }

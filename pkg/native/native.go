@@ -30,6 +30,9 @@ func (reg *NativeFuncRegistry) RegisterNativeFunc() {
 	reg.zState.Env.Set("println", &val.ZNativeFunc{Fn: Z_println})
 	reg.zState.Env.Set("range_list", &val.ZNativeFunc{Fn: Z_range_list})
 
+	// Object creation
+	reg.zState.Env.Set("class", &val.ZNativeFunc{Fn: reg.Z_class})
+
 	// itertools
 	reg.zState.Env.Set("append", &val.ZNativeFunc{Fn: Z_append})
 	reg.zState.Env.Set("filter", &val.ZNativeFunc{Fn: Z_filter})
@@ -63,6 +66,8 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return std.IOModule
 	case "math":
 		return std.MathModule
+	case "tensor":
+		return std.TensorModule
 	}
 
 	// FIXME: handle !ok
@@ -127,6 +132,28 @@ func Z_range_list(args ...val.ZValue) val.ZValue {
 		Elements: element,
 	}
 	return list
+}
+
+func (reg *NativeFuncRegistry) Z_class(args ...val.ZValue) val.ZValue {
+	classDef := val.CLASS(
+		"<anonymous>",
+		&val.Env{
+			ParentEnv: reg.zState.Env,
+			SymTable:  map[string]val.ZValue{},
+		},
+	)
+
+	parentClasses := args
+	for _, parentClass := range parentClasses {
+		if parentClass.Type() != val.ZCLASS {
+			eval.RuntimeErrorf(string(parentClass.Type()) + " is not a class")
+		}
+		for k, v := range parentClass.(*val.ZClass).Env().SymTable {
+			classDef.Env().Set(k, v)
+		}
+	}
+
+	return classDef
 }
 
 func Z_int(args ...val.ZValue) val.ZValue {
