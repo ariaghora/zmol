@@ -14,3 +14,27 @@ A toy language that aims to be:
 Refer to the [docs](docs.md) for more information.
 
 ![screenshot](assets/screenshot.png)
+
+## 0.1.0 Roadmap
+
+- [x] A tree-walking interpreter. Not necessarily a fast one. No error types nor error handling. Program mostly will just terminate on error. This will be replaced by a bytecode VM in the next version.
+- [ ] A REPL
+- [ ] Basic types
+    - [x] Integers
+    - [x] Floats
+    - [x] Strings
+    - [x] Booleans
+    - [x] List
+    - [ ] Maps
+- [x] Functions and closures
+- [x] Objects
+    - [x] Classes
+    - [x] Instances
+    - [x] Methods
+    - [x] Inheritance
+- [ ] Modules
+
+## 0.2.0 Roadmap
+
+- [ ] Error handling
+- [ ] Bytecode compiler

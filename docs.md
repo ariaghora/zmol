@@ -16,7 +16,7 @@ a_boolean = true
 a_list = [1, 2, 3, "Alice", "Bob"]
 
 -- Function is a first-class citizen
-a_function = @(x) { x + 1 }
+a_function = fn(x) { x + 1 }
 println(a_function(10))
 
 ```
@@ -43,7 +43,7 @@ The last expression in the block is the returned value.
 
 ```
 
-is_even = @(x) {
+is_even = fn(x) {
     x % 2 == 0
 }
 ```
@@ -53,7 +53,7 @@ Functions are first-class citizens. They can be passed as arguments to other fun
 add = @(x, y) { x + y }
 sub = @(x, y) { x - y }
 
-calculate = @(x, y, func) { func(x, y) }
+calculate = fn(x, y, func) { func(x, y) }
 
 println(calculate(10, 5, add))
 println(calculate(10, 5, sub))
@@ -61,7 +61,7 @@ println(calculate(10, 5, sub))
 
 Anonymous functions are also supported.
 ```
-println(calculate(10, 5, @(x, y) { x * y }))
+println(calculate(10, 5, fn(x, y) { x * y }))
 ```
 
 ## Built-in functions
@@ -140,7 +140,6 @@ iter {
 | `&& \|\|` | Logical AND and OR operators |
 | `!` | Logical negation operator |
 | `[]` | Indexing operator |
-| `@` | Function definition operator |
 
 The `+` operator can be used to concatenate strings and lists
 
@@ -156,16 +155,16 @@ Special operators will give us some functional programming taste, maybe? They en
 
 Suppose we have following functions:
 ```
-scale = @(x, factor) {
+scale = fn(x, factor) {
     x * factor
 }
 
-is_even = @(x) {
+is_even = fn(x) {
     x % 2 == 0
 }
 
-sum = @(list) {
-    reduce(list, @(x, y) { x + y }, 0) 
+sum = fn(list) {
+    reduce(list, fn(x, y) { x + y }, 0) 
 }
 
 ```
@@ -193,7 +192,7 @@ numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 -- Now we want to filter only even numbers, double them, and sum them up.
 -- Instead of writing a long chain of function calls like this:
-sum(map(filter(numbers, is_even), @(x) { scale(x, 2) }))
+sum(map(filter(numbers, is_even), fn(x) { scale(x, 2) }))
 
 -- We can use the special operators in a more functional style:
 result = numbers
@@ -202,3 +201,54 @@ result = numbers
     |> sum{}
 
 ```
+
+## Object-oriented programming
+
+### Classes
+
+Classes are created using `class` builtin function. 
+
+```
+Person = class()
+```
+We can define methods using dot notation.
+The `self` variable is a special variable that refers to the current instance of the class.
+Different from Python, `self` is not passed as an argument to the method.
+Instead, it is automatically defined and bound to the current instance of the class.
+
+```
+Person = class()
+Person.init = fn(name, age) {
+    self.name = name
+    self.age = age
+}
+Person.say_hello = fn() {
+    println("Hello, my name is " + self.name)
+}
+```
+
+Note that the `init` method is a special method that is called when an instance of the class is created. It is similar to the `__init__` method in Python. If you don't define an `init` method, the class will have an empty `init` method by default.
+
+To instantiate a class, we use call syntax `()`.
+
+```
+john = Person("John", 30)
+john.say_hello()
+```
+## Inheritance
+
+Inheritance is supported. We can call `class` builtin function with an argument of the parent class.
+
+> Multiple inheritance is not supported. You can only pass one base class. In fact, we consider multiple inheritance as "harmful" in most cases.
+ 
+```
+Student = class(Person)
+Student.init = fn(name, age, school) {
+    self.school = school
+    parent.init(name, age) -- call parent's init method
+}
+Student.say_hello = fn() {
+    println("Hello, my name is " + self.name + " and I go to " + self.school)
+}
+```
+
