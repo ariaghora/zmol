@@ -18,7 +18,6 @@ Refer to the [docs](docs.md) for more information.
 ## 0.1.0 Roadmap
 
 - [x] A tree-walking interpreter. Not necessarily a fast one. No error types nor error handling. Program mostly will just terminate on error. This will be replaced by a bytecode VM in the next version.
-- [ ] A REPL
 - [ ] Basic types
     - [x] Integers
     - [x] Floats
@@ -36,5 +35,6 @@ Refer to the [docs](docs.md) for more information.
 
 ## 0.2.0 Roadmap
 
+- [ ] A bytecode compiler and VM
+- [ ] A REPL
 - [ ] Error handling
-- [ ] Bytecode compiler
