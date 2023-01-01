@@ -17,14 +17,13 @@ Refer to the [docs](docs.md) for more information.
 
 ## 0.1.0 Roadmap
 
-- [x] A tree-walking interpreter. Not necessarily a fast one. No error types nor error handling. Program mostly will just terminate on error. This will be replaced by a bytecode VM in the next version.
-- [ ] Basic types
+- [x] A tree-walking interpreter. Not necessarily a fast one. No error types nor error handling. Program mostly will just terminate on error. This will be replaced by a bytecode VM in the next version, with proper error handling and stack traces.
+- [x] Basic types
     - [x] Integers
     - [x] Floats
     - [x] Strings
     - [x] Booleans
     - [x] List
-    - [ ] Maps
 - [x] Functions and closures
 - [x] Objects
     - [x] Classes
@@ -32,6 +31,10 @@ Refer to the [docs](docs.md) for more information.
     - [x] Methods
     - [x] Inheritance
 - [x] Modules
+- [ ] Preliminary standard libraries
+    - [x] `io` 
+    - [x] `math`
+    - [ ] `testing`
 
 ## 0.2.0 Roadmap
 
@@ -39,3 +42,4 @@ Refer to the [docs](docs.md) for more information.
 - [ ] Expose the AST to Zmol
 - [ ] A REPL
 - [ ] Error handling
+- [ ] (Hash-)map-like type
