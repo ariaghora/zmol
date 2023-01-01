@@ -44,17 +44,23 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case bytecode.OpPop:
+			vm.pop()
 		}
 	}
 	return nil
 }
 
-func (vm *VM) LastPoppedStackElem() val.ZValue {
+func (vm *VM) StackTop() val.ZValue {
 	if len(vm.stack) == 0 {
 		return nil
 	}
 
 	return vm.stack[vm.sp-1]
+}
+
+func (vm *VM) LastPoppedStackElem() val.ZValue {
+	return vm.stack[vm.sp]
 }
 
 func (vm *VM) pop() val.ZValue {

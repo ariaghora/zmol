@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -65,10 +64,6 @@ func (z *Zmol) Run(code string) (val.ZValue, error) {
 		return nil, err
 	}
 
-	if z.vm.Sp() == 0 {
-		return nil, errors.New("no result due to runtime error; apologies")
-	}
-
 	result := z.vm.LastPoppedStackElem()
 	return result, nil
 }
@@ -119,7 +114,11 @@ func main() {
 					fmt.Println("ERROR:", err)
 					continue
 				}
-				fmt.Println(val.Str())
+
+				if val == nil {
+					fmt.Println("No value returned possibly because of interpreter error")
+					continue
+				}
 			}
 		}
 	}

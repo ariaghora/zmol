@@ -24,6 +24,17 @@ func TestIntegerArith(t *testing.T) {
 				bytecode.Make(bytecode.OpConstant, 0),
 				bytecode.Make(bytecode.OpConstant, 1),
 				bytecode.Make(bytecode.OpAdd),
+				bytecode.Make(bytecode.OpPop),
+			},
+		},
+		{
+			Input:             "1;2",
+			expectedConstants: []interface{}{1, 2},
+			expectedInstructions: []bytecode.Instructions{
+				bytecode.Make(bytecode.OpConstant, 0),
+				bytecode.Make(bytecode.OpPop),
+				bytecode.Make(bytecode.OpConstant, 1),
+				bytecode.Make(bytecode.OpPop),
 			},
 		},
 	}
