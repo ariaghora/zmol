@@ -68,6 +68,8 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return std.MathModule
 	case "tensor":
 		return std.TensorModule
+	case "testing":
+		return std.TestingModule
 	}
 
 	// FIXME: handle !ok
