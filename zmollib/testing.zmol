@@ -1,0 +1,28 @@
+Testing = class()
+
+Testing.init = fn() {
+    self.n_failed = 0
+    self.n_passed = 0
+    self.results = []
+}
+
+Testing.assert_equals = fn(a, b, msg) {
+    if (a != b) {
+        self.n_failed = self.n_failed + 1
+        append(self.results, "FAIL: " + msg)
+    } else {
+        self.n_passed = self.n_passed + 1
+        append(self.results, "PASS: " + msg)
+    }
+}
+
+Testing.show_results = fn() {
+    iter self.results as it {
+        println(it)
+    }
+    println("=================================")
+    println("Results for ", self.n_passed + self.n_failed, " tests")
+    println("Passed: ", self.n_passed)
+    println("Failed: ", self.n_failed)
+
+}

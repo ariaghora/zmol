@@ -3,6 +3,7 @@ package native
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -14,13 +15,39 @@ import (
 )
 
 type NativeFuncRegistry struct {
-	zState *eval.ZmolState
+	zmolMod map[string]string
+	zState  *eval.ZmolState
 }
 
 func NewNativeFuncRegistry(zState *eval.ZmolState) *NativeFuncRegistry {
+	// get executable path
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	pathCandidate, err := filepath.EvalSymlinks(ex)
+	if err != nil {
+		panic(err)
+	}
+	exDir := filepath.Dir(pathCandidate)
 	return &NativeFuncRegistry{
+		zmolMod: map[string]string{
+			"testing": path.Join(exDir, "zmollib", "testing.zmol"),
+		},
 		zState: zState,
 	}
+}
+
+func (reg *NativeFuncRegistry) ZState() *eval.ZmolState {
+	return reg.zState
+}
+
+func (reg *NativeFuncRegistry) FromZmolModuleFile(modName string, path string) *val.ZModule {
+	mod := reg.Z_import(val.STRING(path))
+	if mod.Type() != val.ZMODULE {
+		eval.RuntimeErrorf("imported module %s is not a module", modName)
+	}
+	return mod.(*val.ZModule)
 }
 
 func (reg *NativeFuncRegistry) RegisterNativeFunc() {
@@ -47,6 +74,9 @@ func (reg *NativeFuncRegistry) RegisterNativeFunc() {
 	// type conversion
 	reg.zState.Env.Set("int", &val.ZNativeFunc{Fn: Z_int})
 	reg.zState.Env.Set("float", &val.ZNativeFunc{Fn: Z_float})
+
+	// System
+	reg.zState.Env.Set("exit", &val.ZNativeFunc{Fn: Z_exit})
 }
 
 func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
@@ -58,7 +88,7 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return &val.ZError{Message: "import takes 1 string"}
 	}
 
-	// Try import std lib
+	// Try import std lib natively defined in go-zmol
 	switch args[0].(*val.ZString).Value {
 	case "goplugin":
 		return goplugin.GoPluginModule
@@ -68,8 +98,11 @@ func (reg *NativeFuncRegistry) Z_import(args ...val.ZValue) val.ZValue {
 		return std.MathModule
 	case "tensor":
 		return std.TensorModule
-	case "testing":
-		return std.TestingModule
+	}
+
+	// Try import zmol module
+	if mod, ok := reg.zmolMod[args[0].(*val.ZString).Value]; ok {
+		return reg.FromZmolModuleFile(args[0].(*val.ZString).Value, mod)
 	}
 
 	// FIXME: handle !ok
@@ -202,4 +235,15 @@ func Z_float(args ...val.ZValue) val.ZValue {
 		eval.RuntimeErrorf("float() takes a number or string as argument")
 	}
 	return &val.ZNull{}
+}
+
+func Z_exit(args ...val.ZValue) val.ZValue {
+	if len(args) == 1 {
+		if args[0].Type() != val.ZINT {
+			return val.ERROR("exit takes 0 or 1 integer argument")
+		}
+		os.Exit(int(args[0].(*val.ZInt).Value))
+	}
+	os.Exit(0)
+	return val.NULL()
 }
