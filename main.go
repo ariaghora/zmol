@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	_ "embed"
+
 	"github.com/ariaghora/zmol/pkg/compiler"
 	"github.com/ariaghora/zmol/pkg/eval"
 	"github.com/ariaghora/zmol/pkg/lexer"
@@ -38,13 +40,6 @@ func NewZmol() *Zmol {
 }
 
 func (z *Zmol) Run(code string) (val.ZValue, error) {
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		fmt.Println("unexpected problem encountered, aborting")
-	// 		os.Exit(1)
-	// 	}
-	// }()
-
 	lexer := lexer.NewLexer(code)
 	err := lexer.Lex()
 	if err != nil {
@@ -78,9 +73,12 @@ func (z *Zmol) Run(code string) (val.ZValue, error) {
 	return result, nil
 }
 
+//go:embed VERSION
+var Version string
+
 func printBanner() {
 	fmt.Println(Banner)
-	fmt.Println("Zmol 0.0.1")
+	fmt.Println("Zmol ", Version)
 }
 
 func main() {
