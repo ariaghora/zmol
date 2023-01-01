@@ -2,12 +2,18 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/ariaghora/zmol/pkg/compiler"
 	"github.com/ariaghora/zmol/pkg/eval"
+	"github.com/ariaghora/zmol/pkg/lexer"
 	"github.com/ariaghora/zmol/pkg/native"
+	"github.com/ariaghora/zmol/pkg/parser"
+	"github.com/ariaghora/zmol/pkg/val"
+	"github.com/ariaghora/zmol/pkg/vm"
 	"github.com/fatih/color"
 )
 
@@ -21,6 +27,7 @@ var Banner = `
 
 // The interpreter
 type Zmol struct {
+	vm    *vm.VM
 	state *eval.ZmolState
 }
 
@@ -30,7 +37,7 @@ func NewZmol() *Zmol {
 	}
 }
 
-func (z *Zmol) Run(code string) {
+func (z *Zmol) Run(code string) (val.ZValue, error) {
 	// defer func() {
 	// 	if r := recover(); r != nil {
 	// 		fmt.Println("unexpected problem encountered, aborting")
@@ -38,12 +45,37 @@ func (z *Zmol) Run(code string) {
 	// 	}
 	// }()
 
-	result, err := z.state.Eval(code)
+	lexer := lexer.NewLexer(code)
+	err := lexer.Lex()
 	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(result.Str())
+		return nil, err
 	}
+	parser := parser.NewParser(lexer)
+	program, err := parser.ParseProgram()
+	if err != nil {
+		return nil, err
+	}
+
+	compiler := compiler.NewCompiler()
+	err = compiler.Compile(program)
+	if err != nil {
+		return nil, err
+	}
+
+	bytecode := compiler.Bytecode()
+	z.vm = vm.NewVM(bytecode)
+	err = z.vm.Run()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if z.vm.Sp() == 0 {
+		return nil, errors.New("no result due to runtime error; apologies")
+	}
+
+	result := z.vm.LastPoppedStackElem()
+	return result, nil
 }
 
 func printBanner() {
@@ -84,7 +116,12 @@ func main() {
 			case ".exit":
 				os.Exit(0)
 			default: // Run the code
-				z.Run(code)
+				val, err := z.Run(code)
+				if err != nil {
+					fmt.Println("ERROR:", err)
+					continue
+				}
+				fmt.Println(val.Str())
 			}
 		}
 	}

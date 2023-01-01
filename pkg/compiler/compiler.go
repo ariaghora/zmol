@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"fmt"
+
 	"github.com/ariaghora/zmol/pkg/ast"
 	"github.com/ariaghora/zmol/pkg/bytecode"
 	"github.com/ariaghora/zmol/pkg/val"
@@ -46,6 +48,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 		err = c.Compile(node.Right)
 		if err != nil {
 			return err
+		}
+
+		switch node.Operator {
+		case "+":
+			c.emit(bytecode.OpAdd)
+		default:
+			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
 	case *ast.IntegerLiteral:
 		intVal := val.INT(node.Value)

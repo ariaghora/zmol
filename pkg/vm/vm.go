@@ -36,6 +36,14 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case bytecode.OpAdd:
+			right := vm.pop()
+			left := vm.pop()
+			result := left.(*val.ZInt).Value + right.(*val.ZInt).Value
+			err := vm.push(val.INT(result))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -49,6 +57,15 @@ func (vm *VM) LastPoppedStackElem() val.ZValue {
 	return vm.stack[vm.sp-1]
 }
 
+func (vm *VM) pop() val.ZValue {
+	if vm.sp == 0 {
+		return nil
+	}
+
+	vm.sp--
+	return vm.stack[vm.sp]
+}
+
 func (vm *VM) push(v val.ZValue) error {
 	if vm.sp == StackSize {
 		return errors.New("stack overflow")
@@ -57,4 +74,12 @@ func (vm *VM) push(v val.ZValue) error {
 	vm.stack[vm.sp] = v
 	vm.sp++
 	return nil
+}
+
+func (vm *VM) Stack() []val.ZValue {
+	return vm.stack
+}
+
+func (vm *VM) Sp() int {
+	return vm.sp
 }

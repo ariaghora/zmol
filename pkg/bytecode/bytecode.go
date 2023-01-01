@@ -11,11 +11,17 @@ type Opcode byte
 
 const (
 	OpConstant Opcode = iota
+	OpAdd
 )
 
 type Definition struct {
 	Name          string
 	OperandWidths []int
+}
+
+var definitions = map[Opcode]*Definition{
+	OpConstant: {"OpConstant", []int{2}},
+	OpAdd:      {"OpAdd", []int{}},
 }
 
 func (ins Instructions) String() string {
@@ -53,10 +59,6 @@ func (ins Instructions) formatInstruction(def *Definition, operands []int) strin
 	}
 
 	return fmt.Sprintf("ERROR: unhandled operandCount for %s\n", def.Name)
-}
-
-var definitions = map[Opcode]*Definition{
-	OpConstant: {"OpConstant", []int{2}},
 }
 
 func Lookup(op byte) (*Definition, error) {
