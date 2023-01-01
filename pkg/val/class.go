@@ -27,6 +27,9 @@ func (z *ZClass) DotAccess(name string) ZValue {
 }
 
 func (z *ZClass) DotAssign(name string, value ZValue) {
+	if value.Type() == ZFUNCTION {
+		value.(*ZFunction).SetName(fmt.Sprintf("%s.%s", z.Name, name))
+	}
 	z.env.Set(name, value)
 }
 

@@ -31,10 +31,11 @@ Refer to the [docs](docs.md) for more information.
     - [x] Instances
     - [x] Methods
     - [x] Inheritance
-- [ ] Modules
+- [x] Modules
 
 ## 0.2.0 Roadmap
 
 - [ ] A bytecode compiler and VM
+- [ ] Expose the AST to Zmol
 - [ ] A REPL
 - [ ] Error handling

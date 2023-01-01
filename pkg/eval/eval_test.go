@@ -30,16 +30,16 @@ func TestFunctionValue(t *testing.T) {
 		t.Fatalf("object is not Function. got=%T (%+v)", evaluated, evaluated)
 	}
 
-	if len(fn.Params) != 1 {
-		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Params)
+	if len(fn.Params()) != 1 {
+		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Params())
 	}
 
-	if fn.Params[0].Str() != "x" {
-		t.Fatalf("parameter is not 'x'. got=%q", fn.Params[0])
+	if fn.Params()[0].Str() != "x" {
+		t.Fatalf("parameter is not 'x'. got=%q", fn.Params()[0])
 	}
 
-	if fn.Body.Str() != "(x + 2)" {
-		t.Fatalf("body is not (x + 2). got=%q", fn.Body.Str())
+	if fn.Body().Str() != "(x + 2)" {
+		t.Fatalf("body is not (x + 2). got=%q", fn.Body().Str())
 	}
 }
 

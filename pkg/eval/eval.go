@@ -106,11 +106,7 @@ func (s *ZmolState) EvalProgram(node ast.Node) val.ZValue {
 	case *ast.FuncLiteral:
 		params := node.Parameters
 		body := node.Body
-		return &val.ZFunction{
-			Params: params,
-			Body:   body,
-			Env:    s.Env,
-		}
+		return val.FUNCTION(params, body, s.Env)
 	case *ast.TernaryExpression:
 		return s.evalTernaryExpression(node)
 	case *ast.IterStatement:
@@ -322,28 +318,33 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 		return list
 	}
 
-	// check if function is a function
 	function := s.EvalProgram(node.FuncLiteral)
-	if function.Type() != val.ZFUNCTION && function.Type() != val.ZNATIVE {
+	if function.Type() != val.ZFUNCTION && function.Type() != val.ZNATIVE && function.Type() != val.ZMODULEFUNC {
 		return val.ERROR("Right side of pipeline must be a function")
 	}
 
-	// prepare first and extra arguments
-	args := []val.ZValue{list}
+	extraArgs := []val.ZValue{}
 	for _, arg := range node.ExtraArgs {
-		args = append(args, s.EvalProgram(arg))
+		extraArgs = append(extraArgs, s.EvalProgram(arg))
 	}
 
 	switch node.Token.Type {
 	case lexer.TokPipe:
+		finalArgs := []val.ZValue{list}
+		finalArgs = append(finalArgs, extraArgs...)
 		if function.Type() == val.ZNATIVE {
-			return function.(*val.ZNativeFunc).Fn(args...)
+			return function.(*val.ZNativeFunc).Fn(finalArgs...)
 		}
-		return s.applyPipe(function.(*val.ZFunction), args)
+		callable, ok := function.(val.ZCallable)
+		if !ok {
+			return val.ERROR("Right side of pipeline must be a callable, got " + string(function.Type()))
+		}
+
+		return s.applyPipe(callable, finalArgs)
 	case lexer.TokMap:
-		return s.applyMap(function, args)
+		return s.applyMap(function, list, extraArgs)
 	case lexer.TokFilter:
-		return s.applyFilter(function, args)
+		return s.applyFilter(function, list, extraArgs)
 	}
 
 	msg := fmt.Sprintf("Unknown pipeline operator: %s", node.Token.Text)
@@ -351,29 +352,24 @@ func (s *ZmolState) evalPipelineExpression(node *ast.PipelineExpression) val.ZVa
 	return val.ERROR(msg)
 }
 
-func (s *ZmolState) applyPipe(fn *val.ZFunction, args []val.ZValue) val.ZValue {
-	if len(args) != len(fn.Params) {
-		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params), len(args))
+func (s *ZmolState) applyPipe(fn val.ZCallable, args []val.ZValue) val.ZValue {
+	if len(args) != len(fn.Params()) {
+		fmt.Println("args", args)
+		RuntimeErrorf("Wrong number of arguments for `%s`: expected=%d, got=%d", fn.Name(), len(fn.Params()), len(args))
 	}
+	evaluated := EvalCallable(fn, args, s.Env)
 
-	zState := NewZmolState(s.Env)
+	// zState := NewZmolState(s.Env)
 
-	for i, param := range fn.Params {
-		zState.Env.Set(param.Value, args[i])
-	}
+	// for i, param := range fn.Params() {
+	// 	zState.Env.Set(param.Value, args[i])
+	// }
 
-	evaluated := zState.EvalProgram(fn.Body)
+	// evaluated := zState.EvalProgram(fn.Body())
 	return evaluated
 }
 
-func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
-
-	list := args[0]
-	extraArgs := []val.ZValue{}
-	if len(args) > 1 {
-		extraArgs = args[1:]
-	}
-
+func (s *ZmolState) applyMap(fn val.ZValue, list val.ZValue, extraArgs []val.ZValue) val.ZValue {
 	// error if the list is not a list or string
 	if list.Type() != val.ZLIST && list.Type() != val.ZSTRING {
 		RuntimeErrorf("Left side of pipeline must be iterable")
@@ -402,10 +398,13 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 	}
 
 	//// Case 2: User-defined function
-	udFunc := fn.(*val.ZFunction)
-	zState := NewZmolState(s.Env)
-	if len(args) != len(udFunc.Params) {
-		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params), len(args))
+	udFunc, ok := fn.(val.ZCallable)
+	if !ok {
+		RuntimeErrorf("Right side of pipeline must be a callable, but got %s", fn.Type())
+	}
+	// zState := NewZmolState(s.Env)
+	if len(extraArgs)+1 != len(udFunc.Params()) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params()), len(extraArgs)+1)
 	}
 
 	// Evaluate the function for each element in the list
@@ -413,21 +412,17 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 	switch list.Type() {
 	case val.ZSTRING:
 		for _, elem := range list.(*val.ZString).Value {
-			zState.Env.Set(udFunc.Params[0].Value, &val.ZString{Value: string(elem)})
-			for i, param := range udFunc.Params[1:] {
-				zState.Env.Set(param.Value, args[i+1])
-			}
-			evaluated := zState.EvalProgram(udFunc.Body)
+			finalArgs := []val.ZValue{&val.ZString{Value: string(elem)}}
+			finalArgs = append(finalArgs, extraArgs...)
+			evaluated := EvalCallable(udFunc, finalArgs, s.Env)
 			newList.Elements = append(newList.Elements, evaluated)
 		}
 
 	case val.ZLIST:
 		for _, elem := range list.(*val.ZList).Elements {
-			zState.Env.Set(udFunc.Params[0].Value, elem)
-			for i, param := range udFunc.Params[1:] {
-				zState.Env.Set(param.Value, args[i+1])
-			}
-			evaluated := zState.EvalProgram(udFunc.Body)
+			finalArgs := []val.ZValue{elem}
+			finalArgs = append(finalArgs, extraArgs...)
+			evaluated := EvalCallable(udFunc, finalArgs, s.Env)
 			newList.Elements = append(newList.Elements, evaluated)
 		}
 	}
@@ -435,13 +430,7 @@ func (s *ZmolState) applyMap(fn val.ZValue, args []val.ZValue) val.ZValue {
 	return newList
 }
 
-func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
-	list := args[0]
-	extraArgs := []val.ZValue{}
-	if len(args) > 1 {
-		extraArgs = args[1:]
-	}
-
+func (s *ZmolState) applyFilter(fn val.ZValue, list val.ZValue, extraArgs []val.ZValue) val.ZValue {
 	// error if the list is not a list or string
 	if list.Type() != val.ZLIST && list.Type() != val.ZSTRING {
 		RuntimeErrorf("Left side of pipeline must be iterable")
@@ -474,10 +463,13 @@ func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
 	}
 
 	//// Case 2: User-defined function
-	udFunc := fn.(*val.ZFunction)
-	zState := NewZmolState(s.Env)
-	if len(args) != len(udFunc.Params) {
-		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params), len(args))
+	udFunc, ok := fn.(val.ZCallable)
+	if !ok {
+		RuntimeErrorf("Right side of pipeline must be a callable, but got %s", fn.Type())
+	}
+	// zState := NewZmolState(s.Env)
+	if len(extraArgs)+1 != len(udFunc.Params()) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(udFunc.Params()), len(extraArgs)+1)
 	}
 
 	// Evaluate the function for each element in the list
@@ -485,11 +477,9 @@ func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
 	switch list.Type() {
 	case val.ZSTRING:
 		for _, elem := range list.(*val.ZString).Value {
-			zState.Env.Set(udFunc.Params[0].Value, &val.ZString{Value: string(elem)})
-			for i, param := range udFunc.Params[1:] {
-				zState.Env.Set(param.Value, args[i+1])
-			}
-			evaluated := zState.EvalProgram(udFunc.Body)
+			finalArgs := []val.ZValue{&val.ZString{Value: string(elem)}}
+			finalArgs = append(finalArgs, extraArgs...)
+			evaluated := EvalCallable(udFunc, finalArgs, s.Env)
 			if evaluated.(*val.ZBool).Value {
 				newList.Elements = append(newList.Elements, &val.ZString{Value: string(elem)})
 			}
@@ -497,11 +487,9 @@ func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
 		}
 	case val.ZLIST:
 		for _, elem := range list.(*val.ZList).Elements {
-			zState.Env.Set(udFunc.Params[0].Value, elem)
-			for i, param := range udFunc.Params[1:] {
-				zState.Env.Set(param.Value, args[i+1])
-			}
-			evaluated := zState.EvalProgram(udFunc.Body)
+			finalArgs := []val.ZValue{elem}
+			finalArgs = append(finalArgs, extraArgs...)
+			evaluated := EvalCallable(udFunc, finalArgs, s.Env)
 			if evaluated.(*val.ZBool).Value {
 				newList.Elements = append(newList.Elements, elem)
 			}
@@ -509,6 +497,19 @@ func (s *ZmolState) applyFilter(fn val.ZValue, args []val.ZValue) val.ZValue {
 	}
 
 	return newList
+}
+
+func EvalCallable(fn val.ZCallable, args []val.ZValue, parentEnv *val.Env) val.ZValue {
+	zState := NewZmolState(parentEnv)
+	if len(args) != len(fn.Params()) {
+		RuntimeErrorf("Wrong number of arguments: expected=%d, got=%d", len(fn.Params()), len(args))
+	}
+
+	for i, param := range fn.Params() {
+		zState.Env.Set(param.Value, args[i])
+	}
+
+	return zState.EvalProgram(fn.Body())
 }
 
 func (s *ZmolState) evalInfixExpression(operator string, left, right val.ZValue) val.ZValue {
@@ -630,7 +631,10 @@ func (s *ZmolState) evalVariableAssignment(node *ast.InfixExpression) val.ZValue
 	case *ast.Identifier:
 		if value.Type() == val.ZCLASS {
 			value.(*val.ZClass).Name = node.Left.(*ast.Identifier).Value
+		} else if value.Type() == val.ZFUNCTION {
+			value.(*val.ZFunction).SetName(node.Left.(*ast.Identifier).Value)
 		}
+
 		return s.Env.Set(node.Left.(*ast.Identifier).Value, value)
 	case *ast.IndexExpression:
 		return s.evalIndexAssignment(node.Left.(*ast.IndexExpression), value)
@@ -700,7 +704,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 		return function.Fn(args...)
 	} else if lEval.Type() == val.ZMODULEFUNC {
 		function := lEval
-		params := function.(*val.ZModuleFunc).Func.Params
+		params := function.(*val.ZModuleFunc).Func.Params()
 		if len(args) == 1 && isErr(args[0]) {
 			return args[0]
 		}
@@ -711,7 +715,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 			}
 			zState.Env.Set(params[i].Value, arg)
 		}
-		evaluated := zState.EvalProgram(function.(*val.ZModuleFunc).Func.Body)
+		evaluated := zState.EvalProgram(function.(*val.ZModuleFunc).Func.Body())
 		return evaluated
 	} else if lEval.Type() == val.ZCLASS {
 		class := lEval.(*val.ZClass)
@@ -722,12 +726,13 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 		for k, v := range class.Env().SymTable {
 			obj.Env().Set(k, v)
 		}
+		obj.Env().ParentEnv = class.Env().ParentEnv
 
 		// try to call the constructor. If it doesn't exist, just return the new object
 		constructorFn, ok := obj.Env().Get("init")
 		if ok {
 			// if the constructor exists, call it
-			params := constructorFn.(*val.ZFunction).Params
+			params := constructorFn.(*val.ZFunction).Params()
 
 			if len(args) != len(params) {
 				RuntimeErrorf("wrong number of arguments for constructor. got=%d, want=%d", len(args), len(params))
@@ -740,7 +745,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 				}
 				zState.Env.Set(params[i].Value, arg)
 			}
-			zState.EvalProgram(constructorFn.(*val.ZFunction).Body)
+			zState.EvalProgram(constructorFn.(*val.ZFunction).Body())
 		}
 
 		if !ok && len(args) > 0 {
@@ -756,7 +761,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 		}
 
 		env := s.Env
-		params := function.(*val.ZFunction).Params
+		params := function.(*val.ZFunction).Params()
 		zState := NewZmolState(env)
 		for i, arg := range args {
 			if isErr(arg) {
@@ -764,7 +769,7 @@ func (s *ZmolState) evalCallExpression(node *ast.CallExpression) val.ZValue {
 			}
 			zState.Env.Set(params[i].Value, arg)
 		}
-		evaluated := zState.EvalProgram(function.(*val.ZFunction).Body)
+		evaluated := zState.EvalProgram(function.(*val.ZFunction).Body())
 		return evaluated
 	}
 

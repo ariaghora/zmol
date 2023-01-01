@@ -1,11 +1,18 @@
 package val
 
+import (
+	"fmt"
+	"os"
+)
+
 // Error type
 type ZError struct {
 	Message string
 }
 
 func ERROR(message string) *ZError {
+	fmt.Println("ERROR: " + message)
+	os.Exit(1)
 	return &ZError{Message: message}
 }
 

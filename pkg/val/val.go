@@ -1,5 +1,7 @@
 package val
 
+import "github.com/ariaghora/zmol/pkg/ast"
+
 type ZValueType string
 
 const (
@@ -68,4 +70,11 @@ type ZDotAccessable interface {
 	DotAccess(name string) ZValue
 	DotAssign(name string, value ZValue)
 	Env() *Env
+}
+
+type ZCallable interface {
+	ZValue
+	Params() []*ast.Identifier
+	Body() *ast.BlockStatement
+	Name() string
 }

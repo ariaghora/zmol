@@ -255,7 +255,7 @@ func (z *ZLex) Lex() error {
 			} else {
 				z.addTok(tokType, 1)
 			}
-		} else if unicode.IsLetter(rune(z.code[z.i])) {
+		} else if unicode.IsLetter(rune(z.code[z.i])) || z.code[z.i] == '_' {
 			z.addIdent()
 		} else if unicode.IsDigit(rune(z.code[z.i])) {
 			z.addNumber()

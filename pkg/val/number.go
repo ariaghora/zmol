@@ -20,6 +20,8 @@ func (z *ZInt) Equals(other ZValue) ZValue {
 		return &ZBool{Value: false}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) == other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value == other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '==' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -29,6 +31,8 @@ func (z *ZInt) NotEquals(other ZValue) ZValue {
 		return &ZBool{Value: true}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) != other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value != other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '!=' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -38,6 +42,8 @@ func (z *ZInt) LessThan(other ZValue) ZValue {
 		return &ZBool{Value: false}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) < other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value < other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '<' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -47,6 +53,8 @@ func (z *ZInt) GreaterThan(other ZValue) ZValue {
 		return &ZBool{Value: false}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) > other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value > other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '>' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -56,6 +64,8 @@ func (z *ZInt) LessThanEquals(other ZValue) ZValue {
 		return &ZBool{Value: false}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) <= other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value <= other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '<=' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -65,6 +75,8 @@ func (z *ZInt) GreaterThanEquals(other ZValue) ZValue {
 		return &ZBool{Value: false}
 	} else if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) >= other.(*ZFloat).Value}
+	} else if other.Type() == ZINT {
+		return &ZBool{Value: z.Value >= other.(*ZInt).Value}
 	}
 	return ERROR(fmt.Sprintf("Operator '>=' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -87,6 +99,8 @@ func (z *ZFloat) Equals(other ZValue) ZValue {
 		return BOOL(false)
 	} else if other.Type() == ZINT {
 		return BOOL(z.Value == float64(other.(*ZInt).Value))
+	} else if other.Type() == ZFLOAT {
+		return BOOL(z.Value == other.(*ZFloat).Value)
 	}
 	return ERROR(fmt.Sprintf("Operator '==' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -96,6 +110,8 @@ func (z *ZFloat) NotEquals(other ZValue) ZValue {
 		return BOOL(true)
 	} else if other.Type() == ZINT {
 		return BOOL(z.Value != float64(other.(*ZInt).Value))
+	} else if other.Type() == ZFLOAT {
+		return BOOL(z.Value != other.(*ZFloat).Value)
 	}
 	return ERROR(fmt.Sprintf("Operator '!=' not defined for %s and %s", z.Type(), other.Type()))
 }
@@ -105,6 +121,8 @@ func (z *ZFloat) LessThan(other ZValue) ZValue {
 		return BOOL(false)
 	} else if other.Type() == ZINT {
 		return BOOL(z.Value < float64(other.(*ZInt).Value))
+	} else if other.Type() == ZFLOAT {
+		return BOOL(z.Value < other.(*ZFloat).Value)
 	}
 
 	return ERROR(fmt.Sprintf("Operator '<' not defined for %s and %s", z.Type(), other.Type()))

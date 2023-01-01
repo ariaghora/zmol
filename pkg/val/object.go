@@ -35,6 +35,9 @@ func (z *ZObject) DotAssign(name string, value ZValue) {
 		fmt.Println("`new` is a reserved attribute name")
 		return
 	}
+	if value.Type() == ZFUNCTION {
+		value.(*ZFunction).SetName(fmt.Sprintf("%s.%s", z.ClassName, name))
+	}
 	z.env.Set(name, value)
 }
 

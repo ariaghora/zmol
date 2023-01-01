@@ -16,7 +16,7 @@ func Z_filter(args ...val.ZValue) val.ZValue {
 	}
 
 	// check if number of arguments in function is 1
-	if len(fn.(*val.ZFunction).Params) != 1 {
+	if len(fn.(*val.ZFunction).Params()) != 1 {
 		return &val.ZError{Message: "filter takes a function with 1 argument"}
 	}
 
@@ -26,8 +26,8 @@ func Z_filter(args ...val.ZValue) val.ZValue {
 	element := []val.ZValue{}
 
 	for _, e := range list.(*val.ZList).Elements {
-		actualFn.Env.Set(actualFn.Params[0].Value, e)
-		isTrue := zState.EvalProgram(actualFn.Body)
+		actualFn.Env.Set(actualFn.Params()[0].Value, e)
+		isTrue := zState.EvalProgram(actualFn.Body())
 
 		// check if return value is boolean
 		if isTrue.Type() != val.ZBOOL {
@@ -73,7 +73,7 @@ func Z_reduce(args ...val.ZValue) val.ZValue {
 	}
 
 	// check if number of arguments in function is 2
-	if len(fn.(*val.ZFunction).Params) != 2 {
+	if len(fn.(*val.ZFunction).Params()) != 2 {
 		return &val.ZError{Message: "reduce takes a function with 2 arguments"}
 	}
 
@@ -83,9 +83,9 @@ func Z_reduce(args ...val.ZValue) val.ZValue {
 	element := initial
 
 	for _, e := range list.(*val.ZList).Elements {
-		actualFn.Env.Set(actualFn.Params[0].Value, element)
-		actualFn.Env.Set(actualFn.Params[1].Value, e)
-		element = zState.EvalProgram(actualFn.Body)
+		actualFn.Env.Set(actualFn.Params()[0].Value, element)
+		actualFn.Env.Set(actualFn.Params()[1].Value, e)
+		element = zState.EvalProgram(actualFn.Body())
 	}
 
 	return element
