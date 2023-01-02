@@ -75,6 +75,10 @@ func (z *ZInt) Mod(other ZValue) ZValue {
 	}
 }
 
+func (z *ZInt) Neg() ZValue {
+	return INT(-z.Value)
+}
+
 func (z *ZInt) Equals(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) == other.(*ZFloat).Value}
@@ -199,6 +203,10 @@ func (z *ZFloat) Mod(other ZValue) ZValue {
 	default:
 		return OP_ERROR("%", z, other)
 	}
+}
+
+func (z *ZFloat) Neg() ZValue {
+	return FLOAT(-z.Value)
 }
 
 func (z *ZFloat) Equals(other ZValue) ZValue {

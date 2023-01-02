@@ -2,6 +2,7 @@ package vm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ariaghora/zmol/pkg/bytecode"
 	"github.com/ariaghora/zmol/pkg/compiler"
@@ -36,12 +37,39 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case bytecode.OpNeg:
+			err := vm.executeUnaryOperation(op)
+			if err != nil {
+				return err
+			}
 		case bytecode.OpAdd, bytecode.OpSub, bytecode.OpMul, bytecode.OpDiv, bytecode.OpMod:
-			vm.executeBinaryOperation(op)
+			err := vm.executeBinaryOperation(op)
+			if err != nil {
+				return err
+			}
 		case bytecode.OpPop:
 			vm.pop()
 		}
 	}
+	return nil
+}
+
+func (vm *VM) executeUnaryOperation(op bytecode.Opcode) error {
+	right := vm.pop()
+
+	fmt.Printf("right: %T\n", right)
+	rightOperand, ok := right.(val.ZArithOperand)
+	if !ok {
+		return errors.New("unsupported operand type")
+	}
+
+	var result val.ZValue = nil
+	switch op {
+	case bytecode.OpNeg:
+		result = rightOperand.Neg()
+	}
+
+	vm.push(result)
 	return nil
 }
 

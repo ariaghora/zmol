@@ -56,6 +56,14 @@ type ZComparable interface {
 	GreaterThanEquals(other ZValue) ZValue
 }
 
+type ZLogical interface {
+	ZValue
+
+	And(other ZValue) ZValue
+	Or(other ZValue) ZValue
+	Not() ZValue
+}
+
 type ZArithOperand interface {
 	ZValue
 	Add(other ZValue) ZValue
@@ -63,6 +71,7 @@ type ZArithOperand interface {
 	Mul(other ZValue) ZValue
 	Div(other ZValue) ZValue
 	Mod(other ZValue) ZValue
+	Neg() ZValue
 }
 
 type ZDotAccessable interface {

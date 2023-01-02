@@ -45,6 +45,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
+	case *ast.PrefixExpression:
+		err := c.compilePrefixExpression(node)
+		if err != nil {
+			return err
+		}
 	case *ast.IntegerLiteral:
 		intVal := val.INT(node.Value)
 		c.emit(bytecode.OpConstant, c.addConstant(intVal))
@@ -54,6 +59,22 @@ func (c *Compiler) Compile(node ast.Node) error {
 	}
 
 	return nil
+}
+
+func (c *Compiler) compilePrefixExpression(node *ast.PrefixExpression) error {
+	err := c.Compile(node.Right)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(node.Operator)
+
+	switch node.Operator {
+	case "-":
+		c.emit(bytecode.OpNeg)
+		return nil
+	}
+	return fmt.Errorf("unknown operator %s", node.Operator)
 }
 
 func (c *Compiler) compileInfixExpression(node *ast.InfixExpression) error {
