@@ -26,6 +26,20 @@ func TestIntegerArith(t *testing.T) {
 	runVMTests(t, tests)
 }
 
+func TestFloatArith(t *testing.T) {
+	tests := []VMTestCase{
+		{"1.0", 1.0},
+		{"2.0", 2.0},
+		{"1.0 + 2.0", 3.0},
+		{"1.0 - 2.0", -1.0},
+		{"2.0 * 2.0", 4.0},
+		{"4.0 / 2.0", 2.0},
+		{"5.5 % 2.0", 1.5},
+	}
+
+	runVMTests(t, tests)
+}
+
 func parse(source string) *ast.Program {
 	l := lexer.NewLexer(source)
 	err := l.Lex()
@@ -38,17 +52,6 @@ func parse(source string) *ast.Program {
 		panic(err)
 	}
 	return res
-}
-
-func testIntegerValue(t *testing.T, value val.ZValue, expected int64) error {
-	result, ok := value.(*val.ZInt)
-	if !ok {
-		return fmt.Errorf("object is not Integer. got=%T (%+v)", value, value)
-	}
-	if result.Value != expected {
-		return fmt.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
-	}
-	return nil
 }
 
 type VMTestCase struct {
@@ -80,11 +83,37 @@ func runVMTests(t *testing.T, tests []VMTestCase) {
 
 func testExpectedValue(t *testing.T, value val.ZValue, expected interface{}) {
 	t.Helper()
+	var err error
 	switch expected := expected.(type) {
 	case int:
-		err := testIntegerValue(t, value, int64(expected))
-		if err != nil {
-			t.Fatal(err)
-		}
+		err = testIntegerValue(t, value, int64(expected))
+	case float32, float64:
+		err = testFloatValue(t, value, expected.(float64))
 	}
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func testIntegerValue(t *testing.T, value val.ZValue, expected int64) error {
+	result, ok := value.(*val.ZInt)
+	if !ok {
+		return fmt.Errorf("object is not Integer. got=%T (%+v)", value, value)
+	}
+	if result.Value != expected {
+		return fmt.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
+	}
+	return nil
+}
+
+func testFloatValue(t *testing.T, value val.ZValue, expected float64) error {
+	result, ok := value.(*val.ZFloat)
+	if !ok {
+		return fmt.Errorf("object is not Float. got=%T (%+v)", value, value)
+	}
+	if result.Value != expected {
+		return fmt.Errorf("object has wrong value. got=%f, want=%f", result.Value, expected)
+	}
+	return nil
 }

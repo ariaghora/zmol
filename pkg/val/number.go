@@ -1,6 +1,9 @@
 package val
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 ///////////////////////////////////////////
 //              Integer type             //
@@ -142,6 +145,62 @@ func (z *ZFloat) Type() ZValueType { return ZFLOAT }
 func (z *ZFloat) Str() string {
 	return fmt.Sprintf("%f", z.Value)
 }
+
+func (z *ZFloat) Add(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return FLOAT(z.Value + float64(other.(*ZInt).Value))
+	case ZFLOAT:
+		return FLOAT(z.Value + other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("+", z, other)
+	}
+}
+
+func (z *ZFloat) Sub(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return FLOAT(z.Value - float64(other.(*ZInt).Value))
+	case ZFLOAT:
+		return FLOAT(z.Value - other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("-", z, other)
+	}
+}
+
+func (z *ZFloat) Mul(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return FLOAT(z.Value * float64(other.(*ZInt).Value))
+	case ZFLOAT:
+		return FLOAT(z.Value * other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("*", z, other)
+	}
+}
+
+func (z *ZFloat) Div(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return FLOAT(z.Value / float64(other.(*ZInt).Value))
+	case ZFLOAT:
+		return FLOAT(z.Value / other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("/", z, other)
+	}
+}
+
+func (z *ZFloat) Mod(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return FLOAT(math.Mod(z.Value, float64(other.(*ZInt).Value)))
+	case ZFLOAT:
+		return FLOAT(math.Mod(z.Value, other.(*ZFloat).Value))
+	default:
+		return OP_ERROR("%", z, other)
+	}
+}
+
 func (z *ZFloat) Equals(other ZValue) ZValue {
 	if other.Type() == ZINT {
 		return BOOL(z.Value == float64(other.(*ZInt).Value))

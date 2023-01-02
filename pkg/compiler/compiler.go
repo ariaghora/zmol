@@ -48,6 +48,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.IntegerLiteral:
 		intVal := val.INT(node.Value)
 		c.emit(bytecode.OpConstant, c.addConstant(intVal))
+	case *ast.FloatLiteral:
+		floatVal := val.FLOAT(node.Value)
+		c.emit(bytecode.OpConstant, c.addConstant(floatVal))
 	}
 
 	return nil
