@@ -277,17 +277,17 @@ func (s *ZmolState) evalBooleanExpression(node *ast.InfixExpression) val.ZValue 
 
 	switch node.Operator {
 	case "==":
-		return leftComparable.Equals(rightComparable)
+		return leftComparable.Equal(rightComparable)
 	case "!=":
-		return leftComparable.NotEquals(rightComparable)
+		return leftComparable.NotEqual(rightComparable)
 	case "<":
 		return leftComparable.LessThan(rightComparable)
 	case ">":
 		return leftComparable.GreaterThan(rightComparable)
 	case "<=":
-		return leftComparable.LessThanEquals(rightComparable)
+		return leftComparable.LessThanEqual(rightComparable)
 	case ">=":
-		return leftComparable.GreaterThanEquals(rightComparable)
+		return leftComparable.GreaterThanEqual(rightComparable)
 	}
 	return val.ERROR(fmt.Sprintf("unknown operator: %s %s %s", node.Left.Str(), node.Operator, node.Right.Str()))
 }

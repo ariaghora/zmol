@@ -16,21 +16,27 @@ func (z *ZBool) Str() string {
 	}
 	return "false"
 }
-func (z *ZBool) Equals(other ZValue) ZValue {
+func (z *ZBool) Equal(other ZValue) ZValue {
 	if other.Type() != ZBOOL {
 		return ERROR("Cannot compare bool with " + string(other.Type()))
 	}
 	return BOOL(z.Value == other.(*ZBool).Value)
 }
-func (z *ZBool) NotEquals(other ZValue) ZValue {
+func (z *ZBool) NotEqual(other ZValue) ZValue {
 	if other.Type() != ZBOOL {
 		return ERROR("Cannot compare bool with " + string(other.Type()))
 	}
 	return BOOL(z.Value != other.(*ZBool).Value)
 }
-func (z *ZBool) LessThanEquals(other ZValue) ZValue {
+func (z *ZBool) LessThan(other ZValue) ZValue {
+	return ERROR("Operator '<' not defined for bool")
+}
+func (z *ZBool) GreaterThan(other ZValue) ZValue {
+	return ERROR("Operator '>' not defined for bool")
+}
+func (z *ZBool) LessThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for bool")
 }
-func (z *ZBool) GreaterThanEquals(other ZValue) ZValue {
+func (z *ZBool) GreaterThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '>=' not defined for bool")
 }

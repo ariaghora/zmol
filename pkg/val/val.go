@@ -48,12 +48,12 @@ type ZValue interface {
 type ZComparable interface {
 	ZValue
 
-	Equals(other ZValue) ZValue
-	NotEquals(other ZValue) ZValue
+	Equal(other ZValue) ZValue
+	NotEqual(other ZValue) ZValue
 	LessThan(other ZValue) ZValue
 	GreaterThan(other ZValue) ZValue
-	LessThanEquals(other ZValue) ZValue
-	GreaterThanEquals(other ZValue) ZValue
+	LessThanEqual(other ZValue) ZValue
+	GreaterThanEqual(other ZValue) ZValue
 }
 
 type ZLogical interface {

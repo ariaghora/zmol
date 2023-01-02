@@ -11,12 +11,22 @@ type Opcode byte
 
 const (
 	OpConstant Opcode = iota
+	OpTrue
+	OpFalse
 	OpAdd
 	OpSub
 	OpMul
 	OpDiv
 	OpMod
 	OpNeg
+	OpEqual
+	OpNotEqual
+	OpGreaterThan
+	OpGreaterThanEqual
+	OpLessThan
+	OpLessThanEqual
+	OpNot
+
 	OpPop
 )
 
@@ -26,14 +36,23 @@ type Definition struct {
 }
 
 var definitions = map[Opcode]*Definition{
-	OpConstant: {"OpConstant", []int{2}},
-	OpAdd:      {"OpAdd", []int{}},
-	OpSub:      {"OpSub", []int{}},
-	OpMul:      {"OpMul", []int{}},
-	OpDiv:      {"OpDiv", []int{}},
-	OpMod:      {"OpMod", []int{}},
-	OpNeg:      {"OpNeg", []int{}},
-	OpPop:      {"OpPop", []int{}},
+	OpConstant:         {"OpConstant", []int{2}},
+	OpTrue:             {"OpTrue", []int{}},
+	OpFalse:            {"OpFalse", []int{}},
+	OpAdd:              {"OpAdd", []int{}},
+	OpSub:              {"OpSub", []int{}},
+	OpMul:              {"OpMul", []int{}},
+	OpDiv:              {"OpDiv", []int{}},
+	OpMod:              {"OpMod", []int{}},
+	OpNeg:              {"OpNeg", []int{}},
+	OpEqual:            {"OpEqual", []int{}},
+	OpNotEqual:         {"OpNotEqual", []int{}},
+	OpGreaterThan:      {"OpGreaterThan", []int{}},
+	OpGreaterThanEqual: {"OpGreaterThanEqual", []int{}},
+	OpLessThan:         {"OpLessThan", []int{}},
+	OpLessThanEqual:    {"OpLessThanEqual", []int{}},
+	OpNot:              {"OpNot", []int{}},
+	OpPop:              {"OpPop", []int{}},
 }
 
 func (ins Instructions) String() string {

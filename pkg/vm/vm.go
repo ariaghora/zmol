@@ -37,6 +37,11 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case bytecode.OpTrue, bytecode.OpFalse:
+			err := vm.push(val.BOOL(op == bytecode.OpTrue))
+			if err != nil {
+				return err
+			}
 		case bytecode.OpNeg:
 			err := vm.executeUnaryOperation(op)
 			if err != nil {
@@ -44,6 +49,11 @@ func (vm *VM) Run() error {
 			}
 		case bytecode.OpAdd, bytecode.OpSub, bytecode.OpMul, bytecode.OpDiv, bytecode.OpMod:
 			err := vm.executeBinaryOperation(op)
+			if err != nil {
+				return err
+			}
+		case bytecode.OpEqual, bytecode.OpNotEqual, bytecode.OpGreaterThan, bytecode.OpLessThan, bytecode.OpGreaterThanEqual, bytecode.OpLessThanEqual:
+			err := vm.executeComparison(op)
 			if err != nil {
 				return err
 			}
@@ -94,6 +104,34 @@ func (vm *VM) executeBinaryOperation(op bytecode.Opcode) error {
 		result = leftOperand.Div(right)
 	case bytecode.OpMod:
 		result = leftOperand.Mod(right)
+	}
+
+	return vm.push(result)
+}
+
+// handle comparison operations
+func (vm *VM) executeComparison(op bytecode.Opcode) error {
+	right := vm.pop()
+	left := vm.pop()
+	leftOperand, ok := left.(val.ZComparable)
+	if !ok {
+		return errors.New("unsupported operand type: " + string(left.Type()))
+	}
+
+	var result val.ZValue = nil
+	switch op {
+	case bytecode.OpEqual:
+		result = leftOperand.Equal(right)
+	case bytecode.OpNotEqual:
+		result = leftOperand.NotEqual(right)
+	case bytecode.OpGreaterThan:
+		result = leftOperand.GreaterThan(right)
+	case bytecode.OpLessThan:
+		result = leftOperand.LessThan(right)
+	case bytecode.OpGreaterThanEqual:
+		result = leftOperand.GreaterThanEqual(right)
+	case bytecode.OpLessThanEqual:
+		result = leftOperand.LessThanEqual(right)
 	}
 
 	return vm.push(result)

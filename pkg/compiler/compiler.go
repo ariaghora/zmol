@@ -56,6 +56,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.FloatLiteral:
 		floatVal := val.FLOAT(node.Value)
 		c.emit(bytecode.OpConstant, c.addConstant(floatVal))
+	case *ast.StringLiteral:
+		stringVal := val.STRING(node.Value)
+		c.emit(bytecode.OpConstant, c.addConstant(stringVal))
+	case *ast.BooleanLiteral:
+		boolVal := val.BOOL(node.Value).Value
+		if boolVal {
+			c.emit(bytecode.OpTrue)
+		} else {
+			c.emit(bytecode.OpFalse)
+		}
 	}
 
 	return nil
@@ -78,34 +88,33 @@ func (c *Compiler) compilePrefixExpression(node *ast.PrefixExpression) error {
 }
 
 func (c *Compiler) compileInfixExpression(node *ast.InfixExpression) error {
-	err := c.Compile(node.Left)
-	if err != nil {
+	if err := c.Compile(node.Left); err != nil {
 		return err
 	}
 
-	err = c.Compile(node.Right)
-	if err != nil {
+	if err := c.Compile(node.Right); err != nil {
 		return err
 	}
 
-	switch node.Operator {
-	case "+":
-		c.emit(bytecode.OpAdd)
-		return nil
-	case "-":
-		c.emit(bytecode.OpSub)
-		return nil
-	case "*":
-		c.emit(bytecode.OpMul)
-		return nil
-	case "/":
-		c.emit(bytecode.OpDiv)
-		return nil
-	case "%":
-		c.emit(bytecode.OpMod)
-		return nil
+	op, found := map[string]bytecode.Opcode{
+		"+":  bytecode.OpAdd,
+		"-":  bytecode.OpSub,
+		"*":  bytecode.OpMul,
+		"/":  bytecode.OpDiv,
+		"%":  bytecode.OpMod,
+		"==": bytecode.OpEqual,
+		"!=": bytecode.OpNotEqual,
+		">":  bytecode.OpGreaterThan,
+		"<":  bytecode.OpLessThan,
+		">=": bytecode.OpGreaterThanEqual,
+		"<=": bytecode.OpLessThanEqual,
+	}[node.Operator]
+
+	if !found {
+		return fmt.Errorf("unknown operator %s", node.Operator)
 	}
-	return fmt.Errorf("unknown operator %s", node.Operator)
+	c.emit(op)
+	return nil
 }
 
 func (c *Compiler) emit(op bytecode.Opcode, operands ...int) int {

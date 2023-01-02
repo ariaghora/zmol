@@ -60,6 +60,51 @@ func TestIntegerArith(t *testing.T) {
 	}
 }
 
+func TestBooleanExpression(t *testing.T) {
+	tests := []struct {
+		Input                string
+		expectedConstants    []interface{}
+		expectedInstructions []bytecode.Instructions
+	}{
+		{
+			Input:             "true",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []bytecode.Instructions{
+				bytecode.Make(bytecode.OpTrue),
+				bytecode.Make(bytecode.OpPop),
+			},
+		},
+		{
+			Input:             "false",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []bytecode.Instructions{
+				bytecode.Make(bytecode.OpFalse),
+				bytecode.Make(bytecode.OpPop),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		program := parse(test.Input)
+		compiler := NewCompiler()
+		err := compiler.Compile(program)
+		if err != nil {
+			t.Fatalf("compiler error: %s", err)
+		}
+
+		bytecode := compiler.Bytecode()
+		err = testInstructions(t, bytecode, test.expectedInstructions)
+		if err != nil {
+			t.Fatalf("testInstructions error: %s", err)
+		}
+
+		err = testConstants(t, bytecode, test.expectedConstants)
+		if err != nil {
+			t.Fatalf("testConstants error: %s", err)
+		}
+	}
+}
+
 func parse(input string) *ast.Program {
 	l := lexer.NewLexer(input)
 	err := l.Lex()

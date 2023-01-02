@@ -24,11 +24,11 @@ func (zl *ZList) Literal() string {
 	return zl.Str()
 }
 
-func (zl *ZList) Equals(other ZValue) ZValue {
+func (zl *ZList) Equal(other ZValue) ZValue {
 	return ERROR("Operator '==' not defined for list")
 }
 
-func (zl *ZList) NotEquals(other ZValue) ZValue {
+func (zl *ZList) NotEqual(other ZValue) ZValue {
 	return ERROR("Operator '!=' not defined for list")
 }
 
@@ -40,10 +40,10 @@ func (zl *ZList) GreaterThan(other ZValue) ZValue {
 	return ERROR("Operator '>' not defined for list")
 }
 
-func (zl *ZList) LessThanEquals(other ZValue) ZValue {
+func (zl *ZList) LessThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for list")
 }
 
-func (zl *ZList) GreaterThanEquals(other ZValue) ZValue {
+func (zl *ZList) GreaterThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '>=' not defined for list")
 }

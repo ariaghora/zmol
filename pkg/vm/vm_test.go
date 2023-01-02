@@ -41,6 +41,27 @@ func TestFloatArith(t *testing.T) {
 	runVMTests(t, tests)
 }
 
+func TestBooleanExpr(t *testing.T) {
+	tests := []VMTestCase{
+		{"true", true},
+		{"false", false},
+		{"1 < 2", true},
+		{"1 > 2", false},
+		{"1 <= 2", true},
+		{"1 >= 2", false},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"1 == 1", true},
+		{"1 != 1", false},
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"\"foo\" == \"foo\"", true},
+	}
+
+	runVMTests(t, tests)
+}
+
 func parse(source string) *ast.Program {
 	l := lexer.NewLexer(source)
 	err := l.Lex()
@@ -90,6 +111,8 @@ func testExpectedValue(t *testing.T, value val.ZValue, expected interface{}) {
 		err = testIntegerValue(t, value, int64(expected))
 	case float32, float64:
 		err = testFloatValue(t, value, expected.(float64))
+	case bool:
+		err = testBooleanValue(t, value, expected)
 	}
 
 	if err != nil {
@@ -115,6 +138,17 @@ func testFloatValue(t *testing.T, value val.ZValue, expected float64) error {
 	}
 	if result.Value != expected {
 		return fmt.Errorf("object has wrong value. got=%f, want=%f", result.Value, expected)
+	}
+	return nil
+}
+
+func testBooleanValue(t *testing.T, value val.ZValue, expected bool) error {
+	result, ok := value.(*val.ZBool)
+	if !ok {
+		return fmt.Errorf("object is not Boolean. got=%T (%+v)", value, value)
+	}
+	if result.Value != expected {
+		return fmt.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
 	}
 	return nil
 }

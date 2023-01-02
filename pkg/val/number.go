@@ -79,7 +79,7 @@ func (z *ZInt) Neg() ZValue {
 	return INT(-z.Value)
 }
 
-func (z *ZInt) Equals(other ZValue) ZValue {
+func (z *ZInt) Equal(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) == other.(*ZFloat).Value}
 	} else if other.Type() == ZINT {
@@ -88,7 +88,7 @@ func (z *ZInt) Equals(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '==' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-func (z *ZInt) NotEquals(other ZValue) ZValue {
+func (z *ZInt) NotEqual(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) != other.(*ZFloat).Value}
 	} else if other.Type() == ZINT {
@@ -115,7 +115,7 @@ func (z *ZInt) GreaterThan(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '>' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-func (z *ZInt) LessThanEquals(other ZValue) ZValue {
+func (z *ZInt) LessThanEqual(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) <= other.(*ZFloat).Value}
 	} else if other.Type() == ZINT {
@@ -124,7 +124,7 @@ func (z *ZInt) LessThanEquals(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '<=' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-func (z *ZInt) GreaterThanEquals(other ZValue) ZValue {
+func (z *ZInt) GreaterThanEqual(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) >= other.(*ZFloat).Value}
 	} else if other.Type() == ZINT {
@@ -245,7 +245,7 @@ func (z *ZFloat) GreaterThan(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '>' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-func (z *ZFloat) LessThanEquals(other ZValue) ZValue {
+func (z *ZFloat) LessThanEqual(other ZValue) ZValue {
 	if other.Type() == ZINT {
 		return BOOL(z.Value <= float64(other.(*ZInt).Value))
 	} else if other.Type() == ZFLOAT {
@@ -254,7 +254,7 @@ func (z *ZFloat) LessThanEquals(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '<=' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-func (z *ZFloat) GreaterThanEquals(other ZValue) ZValue {
+func (z *ZFloat) GreaterThanEqual(other ZValue) ZValue {
 	if other.Type() == ZINT {
 		return BOOL(z.Value >= float64(other.(*ZInt).Value))
 	} else if other.Type() == ZFLOAT {

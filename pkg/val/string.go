@@ -11,13 +11,13 @@ func STRING(value string) *ZString {
 
 func (z *ZString) Type() ZValueType { return ZSTRING }
 func (z *ZString) Str() string      { return z.Value }
-func (z *ZString) Equals(other ZValue) ZValue {
+func (z *ZString) Equal(other ZValue) ZValue {
 	if other.Type() != ZSTRING {
 		return BOOL(false)
 	}
 	return BOOL(z.Value == other.(*ZString).Value)
 }
-func (z *ZString) NotEquals(other ZValue) ZValue {
+func (z *ZString) NotEqual(other ZValue) ZValue {
 	if other.Type() != ZSTRING {
 		return BOOL(true)
 	}
@@ -32,10 +32,10 @@ func (z *ZString) GreaterThan(other ZValue) ZValue {
 	return ERROR("Operator '>' not defined for string")
 }
 
-func (z *ZString) LessThanEquals(other ZValue) ZValue {
+func (z *ZString) LessThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '<=' not defined for string")
 }
 
-func (z *ZString) GreaterThanEquals(other ZValue) ZValue {
+func (z *ZString) GreaterThanEqual(other ZValue) ZValue {
 	return ERROR("Operator '>=' not defined for string")
 }
