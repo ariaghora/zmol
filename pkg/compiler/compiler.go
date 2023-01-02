@@ -41,21 +41,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		c.emit(bytecode.OpPop)
 	case *ast.InfixExpression:
-		err := c.Compile(node.Left)
+		err := c.compileInfixExpression(node)
 		if err != nil {
 			return err
-		}
-
-		err = c.Compile(node.Right)
-		if err != nil {
-			return err
-		}
-
-		switch node.Operator {
-		case "+":
-			c.emit(bytecode.OpAdd)
-		default:
-			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
 	case *ast.IntegerLiteral:
 		intVal := val.INT(node.Value)
@@ -63,6 +51,37 @@ func (c *Compiler) Compile(node ast.Node) error {
 	}
 
 	return nil
+}
+
+func (c *Compiler) compileInfixExpression(node *ast.InfixExpression) error {
+	err := c.Compile(node.Left)
+	if err != nil {
+		return err
+	}
+
+	err = c.Compile(node.Right)
+	if err != nil {
+		return err
+	}
+
+	switch node.Operator {
+	case "+":
+		c.emit(bytecode.OpAdd)
+		return nil
+	case "-":
+		c.emit(bytecode.OpSub)
+		return nil
+	case "*":
+		c.emit(bytecode.OpMul)
+		return nil
+	case "/":
+		c.emit(bytecode.OpDiv)
+		return nil
+	case "%":
+		c.emit(bytecode.OpMod)
+		return nil
+	}
+	return fmt.Errorf("unknown operator %s", node.Operator)
 }
 
 func (c *Compiler) emit(op bytecode.Opcode, operands ...int) int {

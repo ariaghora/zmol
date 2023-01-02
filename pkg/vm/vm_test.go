@@ -16,10 +16,16 @@ func TestIntegerArith(t *testing.T) {
 		{"1", 1},
 		{"2", 2},
 		{"1 + 2", 3},
+		{"1 - 2", -1},
+		{"2 * 2", 4},
+		{"4 / 2", 2},
+		{"5 % 2", 1},
+		{"4 % 2", 0},
 	}
 
 	runVMTests(t, tests)
 }
+
 func parse(source string) *ast.Program {
 	l := lexer.NewLexer(source)
 	err := l.Lex()

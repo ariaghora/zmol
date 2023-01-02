@@ -119,6 +119,8 @@ func main() {
 					fmt.Println("No value returned possibly because of interpreter error")
 					continue
 				}
+
+				fmt.Println(val.Str())
 			}
 		}
 	}

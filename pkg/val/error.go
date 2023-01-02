@@ -1,19 +1,16 @@
 package val
 
-import (
-	"fmt"
-	"os"
-)
-
 // Error type
 type ZError struct {
 	Message string
 }
 
 func ERROR(message string) *ZError {
-	fmt.Println("ERROR: " + message)
-	os.Exit(1)
 	return &ZError{Message: message}
+}
+
+func OP_ERROR(op string, a ZValue, b ZValue) *ZError {
+	return ERROR("Operator '" + op + "' not defined for " + string(a.Type()) + " and " + string(b.Type()))
 }
 
 func (z *ZError) Type() ZValueType { return ZERROR }

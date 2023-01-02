@@ -2,7 +2,10 @@ package val
 
 import "fmt"
 
-// Integer type
+///////////////////////////////////////////
+//              Integer type             //
+///////////////////////////////////////////
+
 type ZInt struct {
 	Value int64
 }
@@ -15,6 +18,60 @@ func (z *ZInt) Type() ZValueType { return ZINT }
 func (z *ZInt) Str() string {
 	return fmt.Sprintf("%d", z.Value)
 }
+
+func (z *ZInt) Add(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return INT(z.Value + other.(*ZInt).Value)
+	case ZFLOAT:
+		return FLOAT(float64(z.Value) + other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("+", z, other)
+	}
+}
+
+func (z *ZInt) Sub(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return INT(z.Value - other.(*ZInt).Value)
+	case ZFLOAT:
+		return FLOAT(float64(z.Value) - other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("-", z, other)
+	}
+}
+
+func (z *ZInt) Mul(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return INT(z.Value * other.(*ZInt).Value)
+	case ZFLOAT:
+		return FLOAT(float64(z.Value) * other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("*", z, other)
+	}
+}
+
+func (z *ZInt) Div(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return INT(z.Value / other.(*ZInt).Value)
+	case ZFLOAT:
+		return FLOAT(float64(z.Value) / other.(*ZFloat).Value)
+	default:
+		return OP_ERROR("/", z, other)
+	}
+}
+
+func (z *ZInt) Mod(other ZValue) ZValue {
+	switch other.Type() {
+	case ZINT:
+		return INT(z.Value % other.(*ZInt).Value)
+	default:
+		return OP_ERROR("%", z, other)
+	}
+}
+
 func (z *ZInt) Equals(other ZValue) ZValue {
 	if other.Type() == ZFLOAT {
 		return &ZBool{Value: float64(z.Value) == other.(*ZFloat).Value}
@@ -69,7 +126,10 @@ func (z *ZInt) GreaterThanEquals(other ZValue) ZValue {
 	return ERROR(fmt.Sprintf("Operator '>=' not defined for %s and %s", z.Type(), other.Type()))
 }
 
-// Float type
+///////////////////////////////////////////
+//               Float type              //
+///////////////////////////////////////////
+
 type ZFloat struct {
 	Value float64
 }

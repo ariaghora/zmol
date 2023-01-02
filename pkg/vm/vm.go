@@ -36,19 +36,39 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
-		case bytecode.OpAdd:
-			right := vm.pop()
-			left := vm.pop()
-			result := left.(*val.ZInt).Value + right.(*val.ZInt).Value
-			err := vm.push(val.INT(result))
-			if err != nil {
-				return err
-			}
+		case bytecode.OpAdd, bytecode.OpSub, bytecode.OpMul, bytecode.OpDiv, bytecode.OpMod:
+			vm.executeBinaryOperation(op)
 		case bytecode.OpPop:
 			vm.pop()
 		}
 	}
 	return nil
+}
+
+// handle arithmetic operations
+func (vm *VM) executeBinaryOperation(op bytecode.Opcode) error {
+	right := vm.pop()
+	left := vm.pop()
+	leftOperand, ok := left.(val.ZArithOperand)
+	if !ok {
+		return errors.New("unsupported operand type: " + string(leftOperand.Type()))
+	}
+
+	var result val.ZValue = nil
+	switch op {
+	case bytecode.OpAdd:
+		result = leftOperand.Add(right)
+	case bytecode.OpSub:
+		result = leftOperand.Sub(right)
+	case bytecode.OpMul:
+		result = leftOperand.Mul(right)
+	case bytecode.OpDiv:
+		result = leftOperand.Div(right)
+	case bytecode.OpMod:
+		result = leftOperand.Mod(right)
+	}
+
+	return vm.push(result)
 }
 
 func (vm *VM) StackTop() val.ZValue {
